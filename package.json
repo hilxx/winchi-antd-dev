@@ -32,10 +32,11 @@
     "build": "cross-env NODE_ENV=production webpack --config config/webpack.config.js"
   },
   "dependencies": {
+    "@ant-design/icons": "^4.6.4",
     "antd": "^4.16.13",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "terser-webpack-plugin": "^5.2.3",
-    "winchi": "^0.0.22"
+    "winchi": "^0.0.23"
   }
 }

@@ -35,7 +35,7 @@ const getProdConfig = (): WebpackConfig => {
 
 export default async (): Promise<WebpackConfig> => {
  const isDev = process.env.NODE_ENV?.startsWith('dev')
- const envConfig = await (isDev ? getDevConfig({ port: 1234 }) : getProdConfig())
+ const envConfig = await (isDev ? getDevConfig({ port: 65535 }) : getProdConfig())
 
  return {
   ...envConfig,
@@ -110,6 +110,7 @@ export default async (): Promise<WebpackConfig> => {
    extensions: ['.js', '.ts', '.tsx'],
    alias: {
     '@src': path.resolve(__dirname, '../src'),
+    'winchi': path.resolve(__dirname, '../src/lib/index.js')
    },
   },
  }

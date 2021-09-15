@@ -1,0 +1,36 @@
+/// <reference types="ts-toolbelt" />
+export * as R from 'ramda';
+import * as func from './func';
+export * from './func';
+export * from './array';
+export * from './ao';
+export * from './isWhat';
+export * from './string';
+export * from './number';
+declare const _default: {
+    isObj: (o: any) => o is object;
+    isEmptyObj: (obj: object) => obj is object;
+    computePercent: import("Function/Curry").Curry<(validBit: number, total: number, cur: number) => string>;
+    polling: import("Function/Curry").Curry<(r1: number, r2: number, slide: number) => number>;
+    mergeStr: import("Function/Curry").Curry<(split: string, rest: string[]) => string>;
+    classifyAos: import("Function/Curry").Curry<(prop: import("./typing").AF<any[], any>, arr: import("./typing").AO[]) => import("./typing").AO>;
+    flatArrayShallow: import("Function/Curry").Curry<(index: number | null | undefined, arr: any[]) => any>;
+    propLength: import("./typing").AF<any[], any>;
+    prop: import("Function/Curry").Curry<(key: import("./typing").GetKey, o: import("./typing").AO) => any>;
+    deepProp: import("Function/Curry").Curry<(keys: import("./typing").GetKey[], o: import("./typing").AO) => import("./typing").AO>;
+    rename: import("Function/Curry").Curry<(key: any, renameKey: any, obj: any) => any>;
+    objToArr: (obj: Record<number, any>) => any[];
+    alt: (f1: import("./typing").AF<any[], any>, f2: import("./typing").AF<any[], any>) => (val?: any) => any;
+    and: (f1: import("./typing").AF<any[], any>, f2: import("./typing").AF<any[], any>) => (val?: any) => any;
+    sep: (...fns: import("./typing").AF<any[], any>[]) => (v?: any) => void;
+    fork: (join: import("./typing").AF<any[], any>, f1: import("./typing").AF<any[], any>, f2: import("./typing").AF<any[], any>) => (v: any) => any;
+    taps: import("./typing").AF<any[], any>;
+    identify: (v: any) => () => any;
+    curryLazy: (x0: any) => import("Function/Curry").Curry<any>;
+    asyncCompose: <D = any>(...fns: import("./typing").AF<any[], any>[]) => func.AsyncComposeReturn<D>;
+    lockWrap: <F extends import("./typing").AF<any[], Promise<any>>>(fn: F) => (...rest: import("./typing").ReturnParameters<F>) => Promise<ReturnType<F> extends any ? ReturnType<F> : Promise<ReturnType<F>>>;
+    callLock: <F_1 extends import("./typing").AF<any[], any>>(fn: F_1) => (...rest: import("./typing").ReturnParameters<F_1>) => ReturnType<F_1>;
+    messageComposeMethod: import("Function/Curry").Curry<(compose: import("./typing").AF<any[], any>, record: Record<string, any>, target: any[] | import("./typing").AO) => Record<string, any>>;
+    debouncePromise: (rejectValue?: any) => (promise: Promise<any>) => Promise<any>;
+};
+export default _default;

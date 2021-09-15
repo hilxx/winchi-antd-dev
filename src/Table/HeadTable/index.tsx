@@ -1,20 +1,20 @@
 import React, { useRef, useState } from 'react'
-import { Alert, Button, Dropdown, Menu, Popconfirm, Spin, Tooltip } from 'antd'
-import { ColumnHeightOutlined, LoadingOutlined, SyncOutlined, } from '@ant-design/icons'
+import { Alert, Button, Dropdown, Menu, Popconfirm, Spin, Tooltip, Tabs } from 'antd'
+import type { TabPaneProps } from 'antd/lib/tabs'
+import { ColumnHeightOutlined, LoadingOutlined, SyncOutlined } from '@ant-design/icons'
 import { defaultProps } from '@src/index'
 import Table, { WcBaseTableProps, ActionRef as BaseActionRef } from '../Base'
-import { removePromise } from '@src/utils'
 import styles from './index.less'
 
 export type ActionRef = BaseActionRef
 
 export interface WcHeadTableProps<T extends AO = AO> extends WcBaseTableProps<T> {
- onAdd?: AF
- onRemove?(keys?: Key[], rows?: T[]): any
+ onClickAdd?: AF
+ /** 关闭新增删除...more 的控制按键  */
  hideControl?: boolean
+ /** 开启顶部过滤 */
  filter?: boolean
  controls?: {
-  add?: boolean
   /** 刷新 */
   refresh?: boolean
   /** 密度 */
@@ -24,28 +24,38 @@ export interface WcHeadTableProps<T extends AO = AO> extends WcBaseTableProps<T>
   /** 删除位置 控制处 */
   Contents?: React.ReactNode[]
  }
+ onRemoves?(rows: T): any
+ tabsConfig?: {
+  tabs?: TabPaneProps[]
+  onChange?(key: any): any,
+  requestKey?: string
+  defaultTab?: string
+ }
 }
+
+export type Size = WcBaseTableProps['size']
 
 type Model = React.FC<WcHeadTableProps>
 
 const WcHeadTable: Model = ({
- onAdd,
+ onClickAdd,
  onLoading: onLoading_,
  actionRef: actionRef_,
  onSelectRowChange: onSelectRowChange_,
- onRemove = () => null,
  hideControl,
  filter,
  controls,
+ onRemoves,
+ pagination,
+ tabsConfig,
  ...props
 }) => {
  const [loading, setLoading] = useState(false)
- const [heightMenuState, setHeightMenuState] = useState('middle')
+ const [heightMenuState, setHeightMenuState] = useState<Size>('middle')
  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
  const actionRef = useRef<ActionRef>()
  const selectedRowsRef = useRef<any[]>()
-
- const onRemovePromise = removePromise(onRemove)
+ const currentTabKeyRef = useRef<string | number | undefined>(tabsConfig?.defaultTab)
 
  const onLoading = (b: boolean) => {
   if (actionRef_) {
@@ -66,8 +76,14 @@ const WcHeadTable: Model = ({
  }
 
  const removeHandle = async () => {
-  await onRemovePromise(selectedRowKeys, selectedRowsRef.current)
+  selectedRowsRef.current && await onRemoves?.(selectedRowsRef.current)
   actionRef.current?.reload()
+ }
+
+ const tabChangeHandle = async (key) => {
+  tabsConfig?.onChange?.(key)
+  currentTabKeyRef.current = key
+  tabsConfig?.requestKey && actionRef.current?.reload({ [tabsConfig.requestKey]: key })
  }
 
  const filterJSX = (
@@ -75,15 +91,16 @@ const WcHeadTable: Model = ({
   </section>
  )
 
+
  const columnHeightMenuJSX = (
   <Menu
-   onClick={({ key }) => setHeightMenuState(key)}
-   selectedKeys={[heightMenuState]}
+   onClick={({ key }) => setHeightMenuState(key as Size)}
+   selectedKeys={[heightMenuState!]}
    className={styles['menu-min-width']}
   >
    {
-    ['small', 'middle', 'large'].map(key => (
-     <Menu.Item key={key}>{defaultProps.Alias?.[key]}</Menu.Item>
+    (['small', 'middle', 'large'] as Required<Size>[]).map(key => (
+     <Menu.Item key={key}>{defaultProps.Alias?.[key!]}</Menu.Item>
     ))
    }
   </Menu>
@@ -96,7 +113,7 @@ const WcHeadTable: Model = ({
     indicator={<></>}
    >
     <Alert
-     style={{ visibility: selectedRowKeys.length > 1 ? 'visible' : 'hidden' }}
+     style={{ visibility: selectedRowKeys.length ? 'visible' : 'hidden' }}
      message={`已选择 ${selectedRowKeys.length} 项`}
      type='info'
      action={
@@ -104,33 +121,39 @@ const WcHeadTable: Model = ({
        {
         controls?.Contents?.map(c => c)
        }
-       <Popconfirm
-        title='确定删除吗？'
-        onConfirm={removeHandle}
-       >
-        <Button
-         size='small'
-         danger
-         type='text'
-        >
-         {/* 第一时间隐藏文字 */}
-         {selectedRowKeys.length > 1 ? '批量删除' : ' '}
-        </Button>
-       </Popconfirm>
+
+       {
+        onRemoves && (
+         <Popconfirm
+          title='确定删除吗？'
+          onConfirm={removeHandle}
+         >
+          <Button
+           size='small'
+           danger
+           type='text'
+          >
+           {/* 第一时间隐藏文字 */}
+           {selectedRowKeys.length ? '批量删除' : ' '}
+          </Button>
+         </Popconfirm>
+        )
+       }
+
        <Button
         size='small'
         type='link'
         onClick={() => actionRef.current?.resetSelectedRows()}
        >
         {/* 第一时间隐藏文字 */}
-        {selectedRowKeys.length > 1 ? '取消选择' : ' '}
+        {selectedRowKeys.length ? '取消选择' : ' '}
        </Button>
       </>
      }
     />
    </Spin>
 
-   {controls?.add === false ? null : <Button onClick={onAdd} type='primary'>新建</Button>}
+   {onClickAdd ? <Button onClick={onClickAdd} type='primary'>{defaultProps.Alias.add}</Button> : null}
 
    {
     controls?.refresh === false ? null :
@@ -162,17 +185,45 @@ const WcHeadTable: Model = ({
  )
 
  return (
-  <main className={styles.wrap}>
-   {filter ? filterJSX : null}
-   {hideControl ? null : tableHeaderJSX}
-   <Table
-    size={heightMenuState as any}
-    actionRef={actionRef}
-    onLoading={onLoading}
-    onSelectRowChange={onSelectRowChange}
-    {...props}
-   />
-  </main>
+  <section className={styles.wrap}>
+   {
+    tabsConfig?.tabs && (
+     <Tabs onChange={tabChangeHandle} defaultActiveKey={tabsConfig.defaultTab}>
+      {
+       tabsConfig.tabs.map(t => {
+        const isLoading = currentTabKeyRef.current === t.tabKey && loading
+
+        return (
+         <Tabs.TabPane
+          key={t.tabKey}
+          {...t}
+          className={styles['tab-pane']}
+          tab={
+           <>
+            {isLoading ? <span className={styles['tab-spin']} ><SyncOutlined spin style={{ margin: 0 }} /></span> : null}
+            <span style={{ visibility: isLoading ? 'hidden' : 'visible' }}>{t.tab}</span>
+           </>
+          }
+         />
+        )
+       })
+      }
+     </Tabs>
+    )
+   }
+   <main className={styles.table}>
+    {filter ? filterJSX : null}
+    {hideControl ? null : tableHeaderJSX}
+    <Table
+     size={heightMenuState as any}
+     actionRef={actionRef}
+     onLoading={onLoading}
+     onSelectRowChange={onSelectRowChange}
+     pagination={{ ...pagination, size: heightMenuState === 'large' ? 'default' : 'small' }}
+     {...props}
+    />
+   </main>
+  </section >
  )
 }
 

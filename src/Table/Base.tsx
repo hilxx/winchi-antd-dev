@@ -4,10 +4,10 @@ import { TableProps, TablePaginationConfig } from 'antd/lib/table'
 import { TableRowSelection } from 'antd/lib/table/interface'
 import { Columns } from '../Page/data'
 import { defaultProps, DefaultProps } from '..'
-import WC, { R } from 'winchi'
+import Wc, { R } from 'winchi'
 
 export interface ActionRef {
- reload(o?: AO): any
+ reload(o?: AO): Promise<any>
  resetSelectedRows(keys?: Key[], rows?: AO[]): any
 }
 
@@ -52,6 +52,7 @@ const WcBaseTable: Model = ({
  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
  const totalPageRef = useRef<number>(0)
  const isRefreshRef = useRef<boolean>(false)
+ const debouncePromiseRef = useRef<AF>(Wc.debouncePromise(setData))
 
  useEffect(() => {
   request()
@@ -59,7 +60,7 @@ const WcBaseTable: Model = ({
    (actionRef as { current: ActionRef }).current = {
     reload(params = {}) {
      isRefreshRef.current = true
-     request(mergePageParams({ page: config.defaultPage, size: pageSize })(params))
+     return request(mergePageParams({ page: config.defaultPage, size: pageSize })(params))
     },
     resetSelectedRows: effectSelectedRowKeys,
    }
@@ -83,8 +84,8 @@ const WcBaseTable: Model = ({
  }
 
  const effectData: AF = d => {
-  const newData = WC.prop(config.dataKey as any, d)
-  const totalPage = WC.prop(config.totalPageKey as any, d)
+  const newData = Wc.prop(config.dataKey as any, d)
+  const totalPage = Wc.prop(config.totalPageKey as any, d)
   const isRefresh = isRefreshRef.current
   totalPageRef.current = totalPage
   setData(isRefresh ? newData : [...data, ...newData])
@@ -98,19 +99,27 @@ const WcBaseTable: Model = ({
   })
  )
 
- const composeRequest = composeRequest_ ? R.curry(R.binary(composeRequest_))(R.__, request_) : request_
+ const composeRequest = R.compose(
+  debouncePromiseRef.current,
+  composeRequest_ ? R.curryN(2, composeRequest_)(R.__, request_) : request_,
+ )
 
- const request = WC.asyncCompose(
+ const requestCatch = R.unless(
+  R.equals(setData),
   toggleSpinning(false),
-  R.tap(resetState),
+ )
+
+ const request = Wc.asyncCompose(
+  toggleSpinning(false),
+  resetState,
   R.when(
-   WC.isObj,
+   Wc.isObj,
    effectData,
   ),
   composeRequest,
   mergePageParams({ size: pageSize, page: currentPage }),
   R.tap(toggleSpinning(true)),
- ).catch(toggleSpinning(false))
+ ).catch(requestCatch)
 
  const pagination: TablePaginationConfig | false = pagination_ === false ? false : {
   hideOnSinglePage: true,

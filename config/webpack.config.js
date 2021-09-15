@@ -92,7 +92,7 @@ exports["default"] = (function () { return __awaiter(void 0, void 0, void 0, fun
         switch (_b.label) {
             case 0:
                 isDev = (_a = process.env.NODE_ENV) === null || _a === void 0 ? void 0 : _a.startsWith('dev');
-                return [4 /*yield*/, (isDev ? getDevConfig({ port: 1234 }) : getProdConfig())];
+                return [4 /*yield*/, (isDev ? getDevConfig({ port: 65535 }) : getProdConfig())];
             case 1:
                 envConfig = _b.sent();
                 return [2 /*return*/, __assign(__assign({}, envConfig), { output: {
@@ -162,7 +162,8 @@ exports["default"] = (function () { return __awaiter(void 0, void 0, void 0, fun
                         ], resolve: {
                             extensions: ['.js', '.ts', '.tsx'],
                             alias: {
-                                '@src': path_1["default"].resolve(__dirname, '../src')
+                                '@src': path_1["default"].resolve(__dirname, '../src'),
+                                'winchi': path_1["default"].resolve(__dirname, '../src/lib/index.js')
                             }
                         } })];
         }

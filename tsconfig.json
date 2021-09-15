@@ -25,6 +25,9 @@
       "@src/*": [
         "./src/*"
       ], 
+      "winchi": [
+        "./src/lib"
+      ], 
     }
   },
   "include": [

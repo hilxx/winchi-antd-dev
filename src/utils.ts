@@ -1,23 +1,17 @@
 import { message } from 'antd'
-import * as R from 'ramda'
+import Wc from 'winchi'
+import { LoadingText } from '@src/index'
 
-/** content 动词（空格）行为  */
-export const actionLoading = R.curry(
- (content: string, f: AF) => async (...params) => {
-  const c = content.split(' ')
-  const hide = message.loading(c.join(''))
+export const actionLoading = Wc.curryLazy(
+ async ({ errText, loadingText }: LoadingText = {}, f: AF, ...params) => {
+  const hide = loadingText !== undefined ? message.loading(loadingText) : undefined
   try {
    await f(...params)
   } catch (err) {
-   message.error({ content: `${c[1]}失败` })
+   errText !== undefined && message.error({ content: errText })
    throw err
   } finally {
-   hide()
+   hide?.()
   }
  }
 )
-
-export const loadingPromise = actionLoading('正在 请求')
-export const addPromise = actionLoading('正在 添加')
-export const editPromise = actionLoading('正在 修改')
-export const removePromise = actionLoading('正在 删除')

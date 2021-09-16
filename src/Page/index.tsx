@@ -44,16 +44,16 @@ const WcPage: Model = ({
     handles={handles}
     {...props}
    />
-
    <Modal
     onCancel={() => setModalVisible(false)}
     visible={modelVisible}
     footer={null}
     confirmLoading
     width={modalWidth}
+   // destroyOnClose
    >
     <WcForm
-     defaultValues={values}
+     initialValues={values}
      columns={columns}
      onSubmit={onAdd}
      {...formProps}

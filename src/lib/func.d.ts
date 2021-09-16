@@ -1,5 +1,5 @@
 /// <reference types="ts-toolbelt" />
-import { AF, AO, ReturnParameters } from "./typing";
+import { AF, AO, ReturnParameters } from "./index";
 export interface AsyncComposeReturn<D = any> {
     (data?: any): Promise<D>;
     catch(cb: AF): AsyncComposeReturn<D>;

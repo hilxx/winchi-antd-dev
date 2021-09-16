@@ -10,8 +10,18 @@ export interface Columns<T extends AO = AO> extends ColumnProps<T> {
    * @description src/Table/index的handles读取Click方法, 如（编辑、删除在配置栏）
     */
   btnsWantClick?: Partial<Record<TableMessageKeys, React.ReactNode>>
+  /** 
+   * @用作展示： 优先级高于全局Alias
+   * @用作表单：优先级低于formProps.options
+    */
+  enum?: { label, value }[]
   formType?: FormType
-  formProps?: FormProps & Omit<FormItemProps, 'label' | 'name'>
+  /**
+   * @description <Form.FormItem {...props} /> 
+   *  */
+  formItemProps?: Omit<FormItemProps, 'label' | 'name'> & { width?: number | string }
+  /** <Form.FormItem><FormComponent {...props}  /></Form.FormItem>  */
+  formProps?: Omit<FormProps, 'defaultValue'>
   hideForm?: boolean
   hideTable?: boolean
   hideDetail?: boolean
@@ -19,4 +29,3 @@ export interface Columns<T extends AO = AO> extends ColumnProps<T> {
 
 export type FormType = 'text' | 'number' | 'select' | 'radio' | 'upload' | 'table'
 
-export type Size = 'small' | 'middle' | 'large'

@@ -1,4 +1,6 @@
+import { createContext, useState } from 'react'
 import { ConfigProvider } from 'antd'
+import type { SizeType } from 'antd/lib/config-provider/SizeContext'
 import zhCN from 'antd/lib/locale/zh_CN'
 import Page from '@src/Page/Test'
 import { hot } from 'react-hot-loader/root'
@@ -6,10 +8,26 @@ import 'antd/dist/antd.css'
 
 const isDev = process.env.NODE_ENV?.startsWith('dev')
 
+export type Size = Exclude<SizeType, void>
+export interface AppConfig {
+ size: Size
+}
+export const AppContext = createContext<{ appConfig: AppConfig, setAppConfig: (c?: Partial<AppConfig>) => any }>
+ ({
+  appConfig: { size: 'middle' },
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  setAppConfig() { },
+ })
+
 const App = () => {
+ const [appConfig, setAppConfig] = useState<AppConfig>({ size: 'middle' })
+ const composeSetAppConfig: AF = (o: Partial<AppConfig>) => setAppConfig({ ...appConfig, ...o })
+
  return (
   <ConfigProvider locale={zhCN} >
-   <Page />
+   <AppContext.Provider value={{ appConfig, setAppConfig: composeSetAppConfig }}>
+    <Page />
+   </AppContext.Provider>
   </ConfigProvider>
  )
 }

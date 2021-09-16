@@ -10,9 +10,9 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.R = void 0;
+exports.func = exports.arr = exports.obj = exports.R = void 0;
 exports.R = require("ramda");
-const func = require("./func");
+const funcs = require("./func");
 const array = require("./array");
 const ao = require("./ao");
 const isWhat = require("./isWhat");
@@ -24,11 +24,31 @@ __exportStar(require("./ao"), exports);
 __exportStar(require("./isWhat"), exports);
 __exportStar(require("./string"), exports);
 __exportStar(require("./number"), exports);
+exports.obj = new Proxy({}, {
+    get() {
+        return exports.obj;
+    },
+    set() {
+        return false;
+    }
+});
+exports.arr = new Proxy([], {
+    set() {
+        return false;
+    }
+});
+function func(...rest) {
+    return rest;
+}
+exports.func = func;
 exports.default = {
-    ...func,
+    ...funcs,
     ...ao,
     ...array,
     ...string,
     ...number,
     ...isWhat,
+    obj: exports.obj,
+    arr: exports.arr,
+    func,
 };

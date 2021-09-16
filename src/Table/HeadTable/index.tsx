@@ -1,7 +1,8 @@
-import React, { useRef, useState } from 'react'
+import React, { useContext, useRef, useState } from 'react'
 import { Alert, Button, Dropdown, Menu, Popconfirm, Spin, Tooltip, Tabs } from 'antd'
 import type { TabPaneProps } from 'antd/lib/tabs'
 import { ColumnHeightOutlined, LoadingOutlined, SyncOutlined } from '@ant-design/icons'
+import { AppContext, Size } from '@src/App'
 import { defaultProps } from '@src/index'
 import Table, { WcBaseTableProps, ActionRef as BaseActionRef } from '../Base'
 import styles from './index.less'
@@ -33,8 +34,6 @@ export interface WcHeadTableProps<T extends AO = AO> extends WcBaseTableProps<T>
  }
 }
 
-export type Size = WcBaseTableProps['size']
-
 type Model = React.FC<WcHeadTableProps>
 
 const WcHeadTable: Model = ({
@@ -51,7 +50,7 @@ const WcHeadTable: Model = ({
  ...props
 }) => {
  const [loading, setLoading] = useState(false)
- const [heightMenuState, setHeightMenuState] = useState<Size>('middle')
+ const { appConfig, setAppConfig } = useContext(AppContext)
  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
  const actionRef = useRef<ActionRef>()
  const selectedRowsRef = useRef<any[]>()
@@ -94,12 +93,12 @@ const WcHeadTable: Model = ({
 
  const columnHeightMenuJSX = (
   <Menu
-   onClick={({ key }) => setHeightMenuState(key as Size)}
-   selectedKeys={[heightMenuState!]}
+   onClick={({ key }) => setAppConfig({ size: key as Size })}
+   selectedKeys={[appConfig.size]}
    className={styles['menu-min-width']}
   >
    {
-    (['small', 'middle', 'large'] as Required<Size>[]).map(key => (
+    (['small', 'middle', 'large'] as Size[]).map(key => (
      <Menu.Item key={key}>{defaultProps.Alias?.[key!]}</Menu.Item>
     ))
    }
@@ -215,11 +214,11 @@ const WcHeadTable: Model = ({
     {filter ? filterJSX : null}
     {hideControl ? null : tableHeaderJSX}
     <Table
-     size={heightMenuState as any}
+     size={appConfig.size}
      actionRef={actionRef}
      onLoading={onLoading}
      onSelectRowChange={onSelectRowChange}
-     pagination={{ ...pagination, size: heightMenuState === 'large' ? 'default' : 'small' }}
+     pagination={{ ...pagination, size: appConfig.size === 'large' ? 'default' : 'small' }}
      {...props}
     />
    </main>

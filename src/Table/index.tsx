@@ -31,7 +31,7 @@ const WcTable: Model = ({
  handles: handles_ = {},
  ...props
 }) => {
- const prop = useMemo(() => Wc.prop(R.__, alias), [alias])
+ const prop = useMemo(() => key => alias?.[key] || defaultProps.Alias[key], [alias])
 
  /** handle新增 消息通知  */
  const handles = useMemo<Handles>(() =>

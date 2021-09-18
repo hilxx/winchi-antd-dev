@@ -1,35 +1,39 @@
 import React, { useEffect, useRef } from 'react'
 import HeadTable, { WcHeadTableProps, ActionRef } from '../HeadTable'
+import Wc, { R } from 'winchi'
+import styles from './index.less'
 
 export interface WcFormTableProps<T extends AO = AO> extends Omit<WcHeadTableProps<T>, 'onChange' | 'onSelectRowChange'> {
- defaultValue?: Key[] | Key
- onChange?: WcHeadTableProps['onSelectRowChange']
+ onChange?(v): any
+ value?: any
 }
 
 type Model = React.FC<WcFormTableProps>
 
+
 const WcFormTable: Model = ({
- defaultValue = [],
- onChange,
  actionRef: actionRef_,
+ onChange,
+ value = Wc.arr,
+ style = Wc.obj,
  ...props
 }) => {
  const actionRef = useRef<ActionRef>()
-
  if (actionRef_) (actionRef_ as AO).current = actionRef.current
 
  useEffect(() => {
-  actionRef.current?.resetSelectedRows(Array.isArray(defaultValue) ? defaultValue : [defaultValue])
- }, [defaultValue])
+  actionRef.current?.resetSelectedRows(Array.isArray(value) ? value : [value])
+ }, [value])
+
 
  return (
-  <section>
-   <HeadTable
-    actionRef={actionRef}
-    onSelectRowChange={onChange}
-    {...props}
-   />
-  </section>
+  <HeadTable
+   hideControl
+   actionRef={actionRef}
+   onSelectRowChange={onChange && R.flip(onChange)}
+   style={{ padding: 0, ...style }}
+   {...props}
+  />
  )
 }
 

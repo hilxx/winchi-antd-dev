@@ -2,8 +2,9 @@ import React, { useContext, useRef, useState } from 'react'
 import { Alert, Button, Dropdown, Menu, Popconfirm, Spin, Tooltip, Tabs } from 'antd'
 import type { TabPaneProps } from 'antd/lib/tabs'
 import { ColumnHeightOutlined, LoadingOutlined, SyncOutlined } from '@ant-design/icons'
-import { AppContext, Size } from '@src/App'
-import { defaultProps } from '@src/index'
+import * as R from 'ramda'
+import { defaultProps, Size } from '@src/index'
+import { AppContext } from '@src/App'
 import Table, { WcBaseTableProps, ActionRef as BaseActionRef } from '../Base'
 import styles from './index.less'
 
@@ -38,7 +39,7 @@ type Model = React.FC<WcHeadTableProps>
 
 const WcHeadTable: Model = ({
  onClickAdd,
- onLoading: onLoading_,
+ onLoading,
  actionRef: actionRef_,
  onSelectRowChange: onSelectRowChange_,
  hideControl,
@@ -47,20 +48,22 @@ const WcHeadTable: Model = ({
  onRemoves,
  pagination,
  tabsConfig,
+ className = '',
+ style,
  ...props
 }) => {
  const [loading, setLoading] = useState(false)
  const { appConfig, setAppConfig } = useContext(AppContext)
  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+ const [currentTabKey, setCurrentTabKey] = useState(tabsConfig?.defaultTab)
  const actionRef = useRef<ActionRef>()
  const selectedRowsRef = useRef<any[]>()
- const currentTabKeyRef = useRef<string | number | undefined>(tabsConfig?.defaultTab)
 
- const onLoading = (b: boolean) => {
+ const loadingHandle = (b: boolean) => {
   if (actionRef_) {
    (actionRef_ as any).current = actionRef.current
   }
-  onLoading_?.(b)
+  onLoading?.(b)
   setLoading(b)
  }
 
@@ -68,7 +71,7 @@ const WcHeadTable: Model = ({
   actionRef?.current?.reload()
  }
 
- const onSelectRowChange: WcHeadTableProps['onSelectRowChange'] = (keys, rows) => {
+ const selectRowChangeHandle: WcHeadTableProps['onSelectRowChange'] = (keys, rows) => {
   onSelectRowChange_?.(keys, rows)
   setSelectedRowKeys(keys)
   selectedRowsRef.current = rows
@@ -79,17 +82,21 @@ const WcHeadTable: Model = ({
   actionRef.current?.reload()
  }
 
- const tabChangeHandle = async (key) => {
+ const effectTabChange = (key) => {
+  setCurrentTabKey(key)
   tabsConfig?.onChange?.(key)
-  currentTabKeyRef.current = key
   tabsConfig?.requestKey && actionRef.current?.reload({ [tabsConfig.requestKey]: key })
  }
+
+ const tabChangeHandle = R.unless(
+  R.equals(currentTabKey),
+  effectTabChange,
+ )
 
  const filterJSX = (
   <section>
   </section>
  )
-
 
  const columnHeightMenuJSX = (
   <Menu
@@ -184,13 +191,13 @@ const WcHeadTable: Model = ({
  )
 
  return (
-  <section className={styles.wrap}>
+  <section style={style} className={`${styles.wrap} ${className}`}>
    {
     tabsConfig?.tabs && (
      <Tabs onChange={tabChangeHandle} defaultActiveKey={tabsConfig.defaultTab}>
       {
        tabsConfig.tabs.map(t => {
-        const isLoading = currentTabKeyRef.current === t.tabKey && loading
+        const isLoading = currentTabKey === t.tabKey && loading
 
         return (
          <Tabs.TabPane
@@ -199,7 +206,11 @@ const WcHeadTable: Model = ({
           className={styles['tab-pane']}
           tab={
            <>
-            {isLoading ? <span className={styles['tab-spin']} ><SyncOutlined spin style={{ margin: 0 }} /></span> : null}
+            {
+             isLoading
+              ? <span className={styles['tab-spin']} ><SyncOutlined spin style={{ margin: 0 }} /></span>
+              : null
+            }
             <span style={{ visibility: isLoading ? 'hidden' : 'visible' }}>{t.tab}</span>
            </>
           }
@@ -216,8 +227,8 @@ const WcHeadTable: Model = ({
     <Table
      size={appConfig.size}
      actionRef={actionRef}
-     onLoading={onLoading}
-     onSelectRowChange={onSelectRowChange}
+     onLoading={loadingHandle}
+     onSelectRowChange={selectRowChangeHandle}
      pagination={{ ...pagination, size: appConfig.size === 'large' ? 'default' : 'small' }}
      {...props}
     />

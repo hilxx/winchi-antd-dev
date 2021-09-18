@@ -8,7 +8,7 @@ import Wc, { R } from 'winchi'
 
 export interface ActionRef {
  reload(o?: AO): Promise<any>
- resetSelectedRows(keys?: Key[], rows?: AO[]): any
+ resetSelectedRows(keys?: (AO | string | number)[]): any
 }
 
 export interface WcBaseTableProps<T extends AO = AO> extends Omit<TableProps<T>, 'columns' | 'rowSelection'> {
@@ -34,10 +34,10 @@ const WcBaseTable: Model = ({
  composeRequest: composeRequest_,
  config: config_ = defaultProps,
  pageSize = defaultProps.pageSize || 40,
- pagination: pagination_ = {},
- rowSelection: rowSelection_ = {},
+ pagination: pagination_ = Wc.obj,
+ rowSelection: rowSelection_ = Wc.obj,
  actionRef,
- rowKey = 'id',
+ rowKey: rowKey_,
  onLoading,
  onSelectRowChange,
  ...props
@@ -50,12 +50,16 @@ const WcBaseTable: Model = ({
  const [data, setData] = useState<AO[]>([])
  const [currentPage, setCurrentPage] = useState(config.defaultPage || 0)
  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+ const rowKey = useMemo<string>(() => (typeof rowKey_ === 'function' ? rowKey() : rowKey_) ?? 'id', [rowKey_])
  const totalPageRef = useRef<number>(0)
  const isRefreshRef = useRef<boolean>(false)
  const debouncePromiseRef = useRef<AF>(Wc.debouncePromise(setData))
 
  useEffect(() => {
   request()
+ }, [currentPage])
+
+ useEffect(() => {
   if (actionRef) {
    (actionRef as { current: ActionRef }).current = {
     reload(params = {}) {
@@ -65,14 +69,18 @@ const WcBaseTable: Model = ({
     resetSelectedRows: effectSelectedRowKeys,
    }
   }
- }, [currentPage])
+ }, [setSelectedRowKeys])
 
  const toggleSpinning = (b: boolean) => () => {
   onLoading?.(b)
   setSpinning(b)
  }
 
- const effectSelectedRowKeys = (ks: Key[] = [], rows: AO[] = []) => {
+ const effectSelectedRowKeys = (ks_: (string | number | AO)[]) => {
+  const ks = ks_.map(k => Wc.isObj(k) ? k[rowKey] : k)
+  if (ks.toString() === selectedRowKeys.toString()) return
+
+  const rows = data.filter(d => ks.includes(d[rowKey]))
   setSelectedRowKeys(ks)
   onSelectRowChange?.(ks, rows)
   rowSelection_ !== false && rowSelection_?.onChange?.(ks, rows)
@@ -145,7 +153,7 @@ const WcBaseTable: Model = ({
    dataSource={data}
    pagination={pagination}
    loading={spinning}
-   rowSelection={rowSelection}
+   rowSelection={rowSelection as any}
   />
  )
 }

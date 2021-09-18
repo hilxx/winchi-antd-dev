@@ -1,21 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.debouncePromise = exports.messageComposeMethod = exports.callLock = exports.lockWrap = exports.asyncCompose = exports.curryLazy = exports.identify = exports.taps = exports.fork = exports.sep = exports.and = exports.alt = void 0;
+exports.debouncePromise = exports.messageComposeMethod = exports.callLock = exports.lockWrap = exports.asyncCompose = exports.curryLazy = exports.identify = exports.fork = exports.sep = exports.and = exports.alt = void 0;
 const R = require("ramda");
 const LOCKET = Symbol('locking');
 const alt = (f1, f2) => (val) => f1(val) || f2(val);
 exports.alt = alt;
 const and = (f1, f2) => (val) => f1(val) && f2(val);
 exports.and = and;
-const sep = (...fns) => (v) => fns.forEach(fn => fn(v));
+const sep = (...fns) => (...rest) => {
+    fns.forEach(fn => fn(...rest));
+    return rest.length === 1 ? rest[0] : rest;
+};
 exports.sep = sep;
 const fork = (join, f1, f2) => v => join(f1(v), f2(v));
 exports.fork = fork;
-const taps = (...fns) => (val) => {
-    fns.forEach((fn) => fn(val));
-    return val;
-};
-exports.taps = taps;
 const identify = v => () => v;
 exports.identify = identify;
 exports.curryLazy = R.compose(R.curry, fn => new Proxy(fn, {

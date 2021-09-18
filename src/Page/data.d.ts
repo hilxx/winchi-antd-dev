@@ -21,11 +21,11 @@ export interface Columns<T extends AO = AO> extends ColumnProps<T> {
    *  */
   formItemProps?: Omit<FormItemProps, 'label' | 'name'> & { width?: number | string }
   /** <Form.FormItem><FormComponent {...props}  /></Form.FormItem>  */
-  formProps?: Omit<FormProps, 'defaultValue'>
+  formProps?: FormProps & { width?: number | string }
   hideForm?: boolean
   hideTable?: boolean
   hideDetail?: boolean
 }
 
-export type FormType = 'text' | 'number' | 'select' | 'radio' | 'upload' | 'table'
+export type FormType = 'text' | 'textArea' | 'number' | 'select' | 'radio' | 'upload' | 'table'
 

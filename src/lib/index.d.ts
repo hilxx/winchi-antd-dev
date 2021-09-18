@@ -12,11 +12,13 @@ export * from './ao';
 export * from './isWhat';
 export * from './string';
 export * from './number';
-export declare const obj: any;
+export declare const obj: AO;
 export declare const arr: any[];
 export declare function func(...rest: any[]): any[];
+export declare const key: unique symbol;
 declare const _default: {
-    obj: any;
+    key: symbol;
+    obj: AO;
     arr: any[];
     func: typeof func;
     isObj: (o: any) => o is object;
@@ -33,10 +35,9 @@ declare const _default: {
     objToArr: (obj: Record<number, any>) => any[];
     alt: (f1: AF<any[], any>, f2: AF<any[], any>) => (val?: any) => any;
     and: (f1: AF<any[], any>, f2: AF<any[], any>) => (val?: any) => any;
-    sep: (...fns: AF<any[], any>[]) => (v?: any) => void;
+    sep: (...fns: AF<any[], any>[]) => (...rest: any[]) => any;
     fork: (join: AF<any[], any>, f1: AF<any[], any>, f2: AF<any[], any>) => (v: any) => any;
-    taps: AF<any[], any>;
-    identify: (v: any) => () => any;
+    identify: AF<any[], any>;
     curryLazy: (x0: any) => import("Function/Curry").Curry<any>;
     asyncCompose: <D = any>(...fns: AF<any[], any>[]) => funcs.AsyncComposeReturn<D>;
     lockWrap: <F extends AF<any[], Promise<any>>>(fn: F) => (...rest: ReturnParameters<F>) => Promise<ReturnType<F> extends any ? ReturnType<F> : Promise<ReturnType<F>>>;

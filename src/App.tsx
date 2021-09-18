@@ -1,14 +1,13 @@
 import { createContext, useState } from 'react'
 import { ConfigProvider } from 'antd'
-import type { SizeType } from 'antd/lib/config-provider/SizeContext'
 import zhCN from 'antd/lib/locale/zh_CN'
 import Page from '@src/Page/Test'
 import { hot } from 'react-hot-loader/root'
 import 'antd/dist/antd.css'
+import { Size } from './index'
 
 const isDev = process.env.NODE_ENV?.startsWith('dev')
 
-export type Size = Exclude<SizeType, void>
 export interface AppConfig {
  size: Size
 }

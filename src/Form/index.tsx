@@ -1,21 +1,28 @@
-import { Columns } from '@src/Page/data'
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { InputProps, FormInstance, InputNumberProps, RadioProps, SelectProps } from 'antd'
-import { Radio, Form, Input, Button, InputNumber, Select } from 'antd'
+import { Radio, Form, Input, Button, InputNumber, Select, Steps, Divider } from 'antd'
+import { LoadingOutlined } from '@ant-design/icons'
 import Wc, { R } from 'winchi'
+import { Columns } from '@src/Page/data'
 import { AppContext } from '@src/App'
 import { defaultProps } from '@src/index'
 import { FormType } from '@src/Page/data'
+import FormTable, { WcFormTableProps } from '@src/Table/FormTable'
+import WcUplopd from '@src/Upload'
 import styles from './index.less'
+
+const { TextArea } = Input
 
 export type FormProps = (
  InputProps
  | InputNumberProps
  | RadioProps
  | SelectProps<any>
+ | WcFormTableProps
 )
 
-export interface WcFormProps<T extends AO = AO> {
+export interface WcFormProps<T extends AO = AO>
+ extends Omit<React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>, 'onSubmit'> {
  initialValues?: T
  /** 
  * @description 二维数组，第一项为分布表单的第一页
@@ -30,20 +37,26 @@ export interface WcFormProps<T extends AO = AO> {
 
 type Model = React.FC<WcFormProps>
 
-const _keySymbol = Symbol('key')
+const Context = createContext({
+ setLoading: Wc.func as AF
+})
 
 const WcForm: Model = ({
  columns: columns_ = Wc.arr,
- steps,
+ steps: steps_,
  initialValues: initialValues_ = Wc.obj,
  onSubmit,
+ className = '',
+ ...props
 }) => {
  const { appConfig } = useContext(AppContext)
- /** 给非表单组件记录值（不提供默认值）。它的优先级高于formRef.current.getFieldsValue */
- const [values, setValues] = useState<AO>({})
- const [submitLoading, setSubmitLoading] = useState(false)
+ const [loading, setLoading] = useState(false)
  const [currentStep, setCurrentStep] = useState(0)
  const formRef = useRef<FormInstance>(null)
+
+ useEffect(() => {
+  setCurrentStep(0)
+ }, [initialValues_])
 
  const columns = useMemo<Columns[][]>(
   R.compose(
@@ -51,6 +64,7 @@ const WcForm: Model = ({
    R.map(_filterColumns),
    Wc.identify(columns_[0] && !Array.isArray(columns_[0]) ? [columns_] : columns_),
   ), [columns_])
+ const steps = useMemo(() => steps_?.slice(0, columns.length), [steps_, columns])
 
  const initialValues = useMemo(() => columns.flat().reduce((r, c) =>
   c.formItemProps?.initialValue ? {
@@ -60,23 +74,20 @@ const WcForm: Model = ({
 
  const stepMaxNum = columns.length - 1
 
- useEffect(() => {
-  formRef.current?.resetFields()
- }, [initialValues])
+ const checkValidata = () =>
+  formRef.current?.validateFields(columns[currentStep]?.map(R.prop('dataIndex') as AF))
 
  const submitHandle = async () => {
   try {
-   setSubmitLoading(true)
-   await formRef.current?.validateFields()
-   const vs = {
-    ...formRef.current?.getFieldsValue(),
-    ...values,
-   }
+   setLoading(true)
+   await checkValidata()
+   const vs = formRef.current?.getFieldsValue()
    await onSubmit?.(vs, initialValues)
+   setCurrentStep(0)
   } catch (err) {
    console.error(`form submiting`, err)
   }
-  setSubmitLoading(false)
+  setLoading(false)
  }
 
  const clickNextHandle = index => Wc.asyncCompose(
@@ -86,23 +97,23 @@ const WcForm: Model = ({
    submitHandle,
   ),
   Wc.identify(index),
-  formRef?.current?.validateFields,
+  checkValidata,
  )()
 
- const formItemJSX = columns.map((cc, index) => {
-  const isHide = currentStep !== index
-  const propinitialValues: AF = R.prop(R.__, initialValues)
+ const formItemJSX = columns.map((cc, index) =>
+  cc.map(({
+   dataIndex,
+   title,
+   formType,
+   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   formItemProps: { initialValue, width, className = '', ...formItemProps } = {},
+   formProps = {},
+   ...columns
+  }) => {
+   const C = _propMapJSX(formType)
+   const isHide = currentStep !== index
 
-  return cc
-   .map(({
-    dataIndex,
-    title,
-    formType,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    formItemProps: { initialValue, width, className = '', ...formItemProps } = {},
-    formProps = {},
-    ...columns
-   }) => (
+   return (
     <Form.Item
      key={`${dataIndex}`}
      className={`${styles['form-item']} ${className}`}
@@ -112,19 +123,20 @@ const WcForm: Model = ({
      style={{
       width,
       ...formItemProps.style || {},
-      display: isHide ? 'none' : undefined
+      display: isHide ? 'none' : formProps?.style?.display
      }}
     >
-     {_propMapJSX(formType)({
-      size: appConfig.size,
-      options: columns.enum,
-      [_keySymbol]: propinitialValues(dataIndex),
-      ...formProps,
-     })}
+     <C
+      size={appConfig.size}
+      options={columns.enum}
+      wcInitVal={initialValues[`${dataIndex}`]}
+      {...formProps}
+      style={{ width: formProps.width, ...formProps.style || {} }}
+     />
     </Form.Item>
    )
-   )
- })
+  })
+ )
 
  const footerJSX = (
   <footer className={styles.footer}>
@@ -132,7 +144,6 @@ const WcForm: Model = ({
     stepMaxNum && currentStep
      ? <Button
       size={appConfig.size}
-      disabled={submitLoading}
       onClick={() => setCurrentStep(currentStep - 1)}
      >
       {defaultProps.Alias.lastStep}
@@ -141,7 +152,7 @@ const WcForm: Model = ({
    }
    <Button
     size={appConfig.size}
-    loading={submitLoading}
+    loading={currentStep + 1 === columns?.length && loading}
     onClick={() => clickNextHandle(currentStep + 1)}
    >
     {currentStep === stepMaxNum ? defaultProps.Alias.submit : defaultProps.Alias.nextStep}
@@ -150,33 +161,89 @@ const WcForm: Model = ({
  )
 
  return (
-  <section>
-   {steps ? <h2 className={styles.title}>{steps[currentStep] || steps[0]}</h2> : null}
-   <Form initialValues={initialValues} ref={formRef} className={styles.form}>
-    {formItemJSX}
-   </Form>
-   {footerJSX}
-  </section>
+  <Context.Provider value={{ setLoading }}>
+   <main {...props} className={`${styles.wrap} ${className}`} >
+    {
+     steps
+      ? (
+       <Steps>
+        {steps.map((s, index) => (
+         <Steps.Step key={s} title={s} icon={index === currentStep && loading ? <LoadingOutlined /> : undefined} />
+        ))}
+       </Steps>
+      )
+      : null
+    }
+    <Divider dashed />
+    <Form initialValues={initialValues} ref={formRef} className={styles.form}>
+     {formItemJSX}
+    </Form>
+    {footerJSX}
+   </main>
+  </Context.Provider>
  )
 }
 
+const _propsEventValues = (e?) => e?.target?.value
+
 const _mapJSX: Record<FormType, (props: FormProps) => React.ReactNode> = {
  text(props: any) {
-  return <Input {...props} />
+  return <FormComponentWrap {...props} getValue={_propsEventValues} Component={Input} />
+ },
+ textArea(props: any) {
+  return <FormComponentWrap {...props} getValue={_propsEventValues} Component={TextArea} />
  },
  number(props: any) {
-  return <InputNumber {...props} />
+  return <FormComponentWrap {...props} Componeynt={InputNumber} />
  },
  radio(props: any) {
-  return <Radio {...props} />
+  return <FormComponentWrap {...props} Component={Radio} />
  },
  select(props: any) {
-  return <Select {...props} />
+  return <FormComponentWrap {...props} Component={Select} />
  },
- table(props) {
-  console.log('table props ', props)
-  return <div></div>
+ table(props: any) {
+  const { setLoading } = useContext(Context)
+  return (
+   <FormComponentWrap
+    {...props}
+    onLoading={Wc.sep(setLoading, props?.onLoading || Wc.func)}
+    Component={FormTable} />
+  )
+ },
+ upload(props: any) {
+  return <FormComponentWrap
+   {...props}
+   Component={WcUplopd}
+  />
  }
+}
+
+const FormComponentWrap: React.FC<{ onChange: AF, wcInitVal: any, getValue?: AF, Component: React.ComponentType<AO> }> = ({
+ wcInitVal,
+ onChange = Wc.func,
+ Component,
+ getValue,
+ ...props
+}) => {
+ const [value, setValue] = useState<any>()
+
+ useEffect(() => {
+  wcInitVal != undefined && value !== wcInitVal && setValue(wcInitVal)
+ }, [wcInitVal])
+
+ const changeHandle = (...rest) => {
+  const newV = getValue?.(...rest) ?? rest[0]
+  if (newV === value) return
+  if (Array.isArray(newV) && Array.isArray(value) && newV.toString() === value.toString()) return
+
+  setValue(newV)
+  onChange?.(...[newV, rest.slice(1)])
+ }
+
+ return (
+  <Component {...props} value={value} onChange={changeHandle} />
+ )
 }
 
 const _propMapJSX: AF = (key = 'text') => _mapJSX[key]

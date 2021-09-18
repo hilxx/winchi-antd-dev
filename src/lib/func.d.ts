@@ -6,10 +6,9 @@ export interface AsyncComposeReturn<D = any> {
 }
 export declare const alt: (f1: AF, f2: AF) => (val?: any) => any;
 export declare const and: (f1: AF, f2: AF) => (val?: any) => any;
-export declare const sep: (...fns: AF[]) => (v?: any) => void;
+export declare const sep: (...fns: AF[]) => (...rest: any[]) => any;
 export declare const fork: (join: AF, f1: AF, f2: AF) => (v: any) => any;
-export declare const taps: AF;
-export declare const identify: (v: any) => () => any;
+export declare const identify: AF;
 export declare const curryLazy: (x0: any) => import("Function/Curry").Curry<any>;
 export declare const asyncCompose: <D = any>(...fns: AF[]) => AsyncComposeReturn<D>;
 export declare const lockWrap: <F extends AF<any[], Promise<any>>>(fn: F) => (...rest: ReturnParameters<F>) => Promise<ReturnType<F> extends any ? ReturnType<F> : Promise<ReturnType<F>>>;

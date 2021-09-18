@@ -9,7 +9,7 @@ export default () => {
    setDefaultValue(Date.now())
   }, 5000)
  }, [])
- 
+
  return (
   <Page
    formProps={{
@@ -20,9 +20,7 @@ export default () => {
      {
       title: '故事的',
       dataIndex: 'time1',
-      hideForm: true,
       formItemProps: {
-       initialValue: defaultValue,
        rules: [
         {
          required: true,
@@ -63,6 +61,31 @@ export default () => {
       title: 'table',
       formType: 'table',
       dataIndex: 'table',
+      formItemProps: {
+       width: '100%',
+      },
+      formProps: {
+       width: '100%',
+       request() {
+        return new Promise(resolve => setTimeout(() => resolve({
+         data: Array.from({ length: 20 }).map((_, index) => ({
+          tab1: 'tab1',
+          tab2: 'tab2',
+          id: index,
+         }))
+        }), 4000))
+       },
+       columns: [
+        {
+         title: 'tab1',
+         dataIndex: 'tab1',
+        },
+        {
+         title: 'tab2',
+         dataIndex: 'tab2',
+        }
+       ]
+      }
      }
     ],
     [
@@ -75,6 +98,18 @@ export default () => {
      {
       title: '小黄花',
       dataIndex: 'time4',
+      formItemProps: {
+       rules: [
+        {
+         required: true,
+         message: '必填',
+        },
+        {
+         min: 4,
+         message: '少于最小长度'
+        }
+       ]
+      },
       render() { return 'Re So So Si Do Si La' }
      }
     ],

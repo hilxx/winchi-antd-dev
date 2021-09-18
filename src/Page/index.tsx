@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { Modal } from 'antd'
+import Wc from 'winchi'
 import WcTable, { WcTableProps } from '../Table'
 import WcForm, { WcFormProps } from '../Form'
 import { defaultProps, TableMessageKeys } from '@src/index'
@@ -12,12 +13,11 @@ export interface WcPageProps<T extends AO = AO> extends Omit<WcTableProps<T>, 'c
 
 type Model = React.FC<WcPageProps>
 
-const _AO: AO = {}
 const WcPage: Model = ({
  columns,
- formProps = {},
+ formProps = Wc.obj,
  modalWidth = defaultProps.ModalWidth.form,
- handles: { onAdd, onEdit, ...handles_ } = _AO,
+ handles: { onAdd, onEdit, ...handles_ } = Wc.obj,
  ...props
 }) => {
  const [modelVisible, setModalVisible] = useState(false)
@@ -27,6 +27,12 @@ const WcPage: Model = ({
  const clickAddHandle = onAdd && (() => {
   setModalVisible(true)
  })
+
+ const submitHandle = async (vs) => {
+  await (values ? onEdit?.(vs, values) : onAdd(values))
+  setModalVisible(false)
+  setValues(undefined)
+ }
 
  const handles = useMemo<Partial<Record<TableMessageKeys, AF>>>(() => ({
   onClickEdit: onEdit && ((v) => {
@@ -55,7 +61,7 @@ const WcPage: Model = ({
     <WcForm
      initialValues={values}
      columns={columns}
-     onSubmit={onAdd}
+     onSubmit={submitHandle}
      {...formProps}
     />
    </Modal>

@@ -1,13 +1,16 @@
 import { render } from 'react-dom'
+import type { SizeType } from 'antd/lib/config-provider/SizeContext'
 import { Button } from 'antd'
 import App from './App'
 import Wc from 'winchi'
-import { Columns, Size } from './Page/data'
+import { Columns } from './Page/data'
 
 export interface LoadingText {
  loadingText?: string
  errText?: string
 }
+
+export type Size = Exclude<SizeType, void>
 
 /** handles预留字  */
 export type TableMessageKeys = 'onRemoves'

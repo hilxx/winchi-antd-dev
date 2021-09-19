@@ -1,7 +1,19 @@
 import type { ColumnProps } from 'antd/lib/table'
 import type { TableMessageKeys } from '@src/index'
-import type { FormItemProps } from 'antd/lib/form'
-import type { FormProps } from '@src/Form'
+import type { FormItemProps, FormListProps } from 'antd/lib/form'
+import type { FormProps, FormType } from '@src/Form'
+
+export interface LayoutSize {
+  width?: string | number
+}
+
+export interface ColumnFormItemProps extends Omit<FormItemProps, 'label' | 'name'>, LayoutSize {
+
+}
+
+export interface ColumnFormListProps extends Omit<FormListProps, 'label' | 'name'>, LayoutSize {
+  columns: Columns[]
+}
 
 export interface Columns<T extends AO = AO> extends ColumnProps<T> {
   /** 
@@ -18,8 +30,10 @@ export interface Columns<T extends AO = AO> extends ColumnProps<T> {
   formType?: FormType
   /**
    * @description <Form.FormItem {...props} /> 
-   *  */
-  formItemProps?: Omit<FormItemProps, 'label' | 'name'> & { width?: number | string }
+   *  
+   */
+  formItemProps?: ColumnFormItemProps
+  formListProps?: ColumnFormListProps
   /** <Form.FormItem><FormComponent {...props}  /></Form.FormItem>  */
   formProps?: FormProps & { width?: number | string }
   hideForm?: boolean
@@ -27,5 +41,4 @@ export interface Columns<T extends AO = AO> extends ColumnProps<T> {
   hideDetail?: boolean
 }
 
-export type FormType = 'text' | 'textArea' | 'number' | 'select' | 'radio' | 'upload' | 'table'
 

@@ -33,6 +33,8 @@ declare const _default: {
     deepProp: import("Function/Curry").Curry<(keys: GetKey[], o: AO) => AO>;
     rename: import("Function/Curry").Curry<(key: any, renameKey: any, obj: any) => any>;
     objToArr: (obj: Record<number, any>) => any[];
+    mergeRight: <U, V>(a: U, b: V) => any;
+    mergeLeft: <U, V>(a: U, b: V) => any;
     alt: (f1: AF<any[], any>, f2: AF<any[], any>) => (val?: any) => any;
     and: (f1: AF<any[], any>, f2: AF<any[], any>) => (val?: any) => any;
     sep: (...fns: AF<any[], any>[]) => (...rest: any[]) => any;

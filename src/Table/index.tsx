@@ -3,7 +3,7 @@ import { Button, Divider, Space } from 'antd'
 import HeadTable, { WcHeadTableProps } from './HeadTable'
 import Wc, { R } from 'winchi'
 import { actionLoading } from '@src/utils'
-import { Columns } from '@src/Page/data'
+import { Columns } from '@src/data'
 import { defaultProps, DefaultProps, TableMessageKeys } from '@src/index'
 import styles from './index.less'
 

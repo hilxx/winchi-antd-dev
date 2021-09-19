@@ -32,7 +32,7 @@ const WcPage: Model = ({
   await (values ? onEdit?.(vs, values) : onAdd(values))
   setModalVisible(false)
   setValues(undefined)
- }
+ } 
 
  const handles = useMemo<Partial<Record<TableMessageKeys, AF>>>(() => ({
   onClickEdit: onEdit && ((v) => {

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import HeadTable, { WcHeadTableProps, ActionRef } from '../HeadTable'
 import Wc, { R } from 'winchi'
-import styles from './index.less'
 
 export interface WcFormTableProps<T extends AO = AO> extends Omit<WcHeadTableProps<T>, 'onChange' | 'onSelectRowChange'> {
  onChange?(v): any

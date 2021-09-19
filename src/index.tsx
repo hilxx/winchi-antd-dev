@@ -3,7 +3,8 @@ import type { SizeType } from 'antd/lib/config-provider/SizeContext'
 import { Button } from 'antd'
 import App from './App'
 import Wc from 'winchi'
-import { Columns } from './Page/data'
+import { Columns } from './d'
+import { WcUploadProps } from './Upload'
 
 export interface LoadingText {
  loadingText?: string
@@ -21,7 +22,7 @@ export type TableMessageKeys = 'onRemoves'
  | 'onClickRemove'
 
 export type AliasKey = Size |
- 'handle' | 'edit' | 'remove' | 'nextStep' | 'lastStep' | 'submit' |'add'
+ 'handle' | 'edit' | 'remove' | 'nextStep' | 'lastStep' | 'submit' | 'add'
 
 export type Alias = Record<AliasKey, string>
 
@@ -48,7 +49,8 @@ export interface DefaultProps {
  ModalWidth: {
   form?: string | number
   image?: string | number
- }
+ },
+ upload: Omit<WcUploadProps, 'fileList'>
 }
 
 const alias: Alias = {
@@ -101,7 +103,8 @@ export const defaultProps: DefaultProps = {
  },
  ModalWidth: {
   form: 750,
- }
+ },
+ upload: Wc.obj,
 }
 
 export const setGlobalConfig = (o: Partial<DefaultProps>): void =>

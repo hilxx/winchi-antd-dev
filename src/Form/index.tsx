@@ -1,25 +1,15 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import type { InputProps, FormInstance, InputNumberProps, RadioProps, SelectProps } from 'antd'
-import { Radio, Form, Input, Button, InputNumber, Select, Steps, Divider } from 'antd'
+import type { FormInstance } from 'antd'
+import { Form, Button, Steps, Divider } from 'antd'
 import { LoadingOutlined } from '@ant-design/icons'
 import Wc, { R } from 'winchi'
-import { Columns } from '@src/Page/data'
+import { Columns } from '@src/d'
 import { AppContext } from '@src/App'
 import { defaultProps } from '@src/index'
-import { FormType } from '@src/Page/data'
-import FormTable, { WcFormTableProps } from '@src/Table/FormTable'
-import WcUplopd from '@src/Upload'
+import { propFormTypeFC } from './formType'
+import ResolveChidren from './ResolveChidren'
+
 import styles from './index.less'
-
-const { TextArea } = Input
-
-export type FormProps = (
- InputProps
- | InputNumberProps
- | RadioProps
- | SelectProps<any>
- | WcFormTableProps
-)
 
 export interface WcFormProps<T extends AO = AO>
  extends Omit<React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>, 'onSubmit'> {
@@ -35,9 +25,10 @@ export interface WcFormProps<T extends AO = AO>
  onSubmit?(data: T, defaultData?: T): Promise<any>
 }
 
+
 type Model = React.FC<WcFormProps>
 
-const Context = createContext({
+export const WcFormContext = createContext({
  setLoading: Wc.func as AF
 })
 
@@ -74,6 +65,8 @@ const WcForm: Model = ({
 
  const stepMaxNum = columns.length - 1
 
+ const propInitialValues: AF = R.prop(R.__, initialValues)
+
  const checkValidata = () =>
   formRef.current?.validateFields(columns[currentStep]?.map(R.prop('dataIndex') as AF))
 
@@ -101,42 +94,14 @@ const WcForm: Model = ({
  )()
 
  const formItemJSX = columns.map((cc, index) =>
-  cc.map(({
-   dataIndex,
-   title,
-   formType,
-   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-   formItemProps: { initialValue, width, className = '', ...formItemProps } = {},
-   formProps = {},
-   ...columns
-  }) => {
-   const C = _propMapJSX(formType)
-   const isHide = currentStep !== index
-
-   return (
-    <Form.Item
-     key={`${dataIndex}`}
-     className={`${styles['form-item']} ${className}`}
-     {...formItemProps}
-     name={`${dataIndex}`}
-     label={title}
-     style={{
-      width,
-      ...formItemProps.style || {},
-      display: isHide ? 'none' : formProps?.style?.display
-     }}
-    >
-     <C
-      size={appConfig.size}
-      options={columns.enum}
-      wcInitVal={initialValues[`${dataIndex}`]}
-      {...formProps}
-      style={{ width: formProps.width, ...formProps.style || {} }}
-     />
-    </Form.Item>
-   )
-  })
- )
+  cc.map(c =>
+   <ResolveChidren
+    key={`${c.dataIndex}`}
+    {...c}
+    hide={index !== currentStep}
+    initialValue={propInitialValues(c.dataIndex)}
+   />
+  ))
 
  const footerJSX = (
   <footer className={styles.footer}>
@@ -161,7 +126,7 @@ const WcForm: Model = ({
  )
 
  return (
-  <Context.Provider value={{ setLoading }}>
+  <WcFormContext.Provider value={{ setLoading }}>
    <main {...props} className={`${styles.wrap} ${className}`} >
     {
      steps
@@ -180,77 +145,16 @@ const WcForm: Model = ({
     </Form>
     {footerJSX}
    </main>
-  </Context.Provider>
+  </WcFormContext.Provider>
  )
 }
 
-const _propsEventValues = (e?) => e?.target?.value
-
-const _mapJSX: Record<FormType, (props: FormProps) => React.ReactNode> = {
- text(props: any) {
-  return <FormComponentWrap {...props} getValue={_propsEventValues} Component={Input} />
- },
- textArea(props: any) {
-  return <FormComponentWrap {...props} getValue={_propsEventValues} Component={TextArea} />
- },
- number(props: any) {
-  return <FormComponentWrap {...props} Componeynt={InputNumber} />
- },
- radio(props: any) {
-  return <FormComponentWrap {...props} Component={Radio} />
- },
- select(props: any) {
-  return <FormComponentWrap {...props} Component={Select} />
- },
- table(props: any) {
-  const { setLoading } = useContext(Context)
-  return (
-   <FormComponentWrap
-    {...props}
-    onLoading={Wc.sep(setLoading, props?.onLoading || Wc.func)}
-    Component={FormTable} />
-  )
- },
- upload(props: any) {
-  return <FormComponentWrap
-   {...props}
-   Component={WcUplopd}
-  />
- }
-}
-
-const FormComponentWrap: React.FC<{ onChange: AF, wcInitVal: any, getValue?: AF, Component: React.ComponentType<AO> }> = ({
- wcInitVal,
- onChange = Wc.func,
- Component,
- getValue,
- ...props
-}) => {
- const [value, setValue] = useState<any>()
-
- useEffect(() => {
-  wcInitVal != undefined && value !== wcInitVal && setValue(wcInitVal)
- }, [wcInitVal])
-
- const changeHandle = (...rest) => {
-  const newV = getValue?.(...rest) ?? rest[0]
-  if (newV === value) return
-  if (Array.isArray(newV) && Array.isArray(value) && newV.toString() === value.toString()) return
-
-  setValue(newV)
-  onChange?.(...[newV, rest.slice(1)])
- }
-
- return (
-  <Component {...props} value={value} onChange={changeHandle} />
- )
-}
-
-const _propMapJSX: AF = (key = 'text') => _mapJSX[key]
 
 const _filterColumns: AF = R.filter((c: Columns) =>
- !c.hideForm && c.dataIndex != undefined && _propMapJSX(c.formType)
+ !c.hideForm && c.dataIndex != undefined && propFormTypeFC(c.formType)
 )
 
 export default React.memo<Model>(WcForm)
+
+export * from './formType'
 

@@ -1,12 +1,20 @@
 @import '~@src/App.less';
 
 .wrap {
-
  >* {
   &:nth-child(2) {
    margin: @margin-sm 0;
   }
  }
+}
+
+.form {
+ max-height     : 70vh;
+ display        : flex;
+ justify-content: space-between;
+ flex-wrap      : wrap;
+ overflow-y     : auto;
+ transition     : .25s linear;
 }
 
 .title {
@@ -19,18 +27,4 @@
  margin-top     : @margin-md;
 }
 
-.form {
- display        : flex;
- justify-content: space-between;
- flex-wrap      : wrap;
- height         : 70vh;
- overflow-y     : auto;
-}
 
-.form-item {
- width: 48%;
-
- @media (max-width: 600px) {
-  width: 100%;
- }
-}

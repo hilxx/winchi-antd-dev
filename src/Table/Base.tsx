@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Table } from 'antd'
 import { TableProps, TablePaginationConfig } from 'antd/lib/table'
 import { TableRowSelection } from 'antd/lib/table/interface'
-import { Columns } from '../Page/data'
+import { Columns } from '@src/d'
 import { defaultProps, DefaultProps } from '..'
 import Wc, { R } from 'winchi'
 
@@ -59,27 +59,14 @@ const WcBaseTable: Model = ({
   request()
  }, [currentPage])
 
- useEffect(() => {
-  if (actionRef) {
-   (actionRef as { current: ActionRef }).current = {
-    reload(params = {}) {
-     isRefreshRef.current = true
-     return request(mergePageParams({ page: config.defaultPage, size: pageSize })(params))
-    },
-    resetSelectedRows: effectSelectedRowKeys,
-   }
-  }
- }, [setSelectedRowKeys])
-
  const toggleSpinning = (b: boolean) => () => {
   onLoading?.(b)
   setSpinning(b)
  }
 
- const effectSelectedRowKeys = (ks_: (string | number | AO)[]) => {
+ const effectSelectedRowKeys = (ks_: (string | number | AO)[] = Wc.arr) => {
   const ks = ks_.map(k => Wc.isObj(k) ? k[rowKey] : k)
   if (ks.toString() === selectedRowKeys.toString()) return
-
   const rows = data.filter(d => ks.includes(d[rowKey]))
   setSelectedRowKeys(ks)
   onSelectRowChange?.(ks, rows)
@@ -87,7 +74,7 @@ const WcBaseTable: Model = ({
  }
 
  const resetState = () => {
-  isRefreshRef.current && effectSelectedRowKeys([])
+  isRefreshRef.current && effectSelectedRowKeys(Wc.arr)
   isRefreshRef.current = false
  }
 
@@ -144,6 +131,16 @@ const WcBaseTable: Model = ({
   ...rowSelection_,
   selectedRowKeys,
   onChange: effectSelectedRowKeys,
+ }
+
+ if (actionRef) {
+  (actionRef as { current: ActionRef }).current = {
+   reload(params = {}) {
+    isRefreshRef.current = true
+    return request(mergePageParams({ page: config.defaultPage, size: pageSize })(params))
+   },
+   resetSelectedRows: effectSelectedRowKeys,
+  }
  }
 
  return (

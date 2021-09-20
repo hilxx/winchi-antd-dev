@@ -4,7 +4,7 @@ import WcFormList from './List'
 
 export interface WcResolveChidrenProps extends AO {
  hide: boolean
- initialValue: any
+ wcInitVal: any
 }
 
 type Model = React.FC<WcResolveChidrenProps>

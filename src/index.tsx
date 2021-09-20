@@ -2,7 +2,7 @@ import { render } from 'react-dom'
 import type { SizeType } from 'antd/lib/config-provider/SizeContext'
 import { Button } from 'antd'
 import App from './App'
-import Wc from 'winchi'
+import Wc, { R } from 'winchi'
 import { Columns } from './d'
 import { WcUploadProps } from './Upload'
 
@@ -66,7 +66,7 @@ const alias: Alias = {
  add: '新增',
 }
 
-export const defaultProps: DefaultProps = {
+export let defaultProps: DefaultProps = {
  dataKey: 'data',
  totalPageKey: 'totalPage',
  requestPageKey: 'page',
@@ -107,12 +107,10 @@ export const defaultProps: DefaultProps = {
  upload: Wc.obj,
 }
 
-export const setGlobalConfig = (o: Partial<DefaultProps>): void =>
- Object.entries(o).forEach(([k, v]) => {
-  if (Wc.isObj(defaultProps[k]) && Wc.isObj(v))
-   return Reflect.ownKeys(v).forEach((key) => defaultProps[k][key] = v[key])
-  defaultProps[k] = v
- }
- )
+
+export const setGlobalConfig: AF<[o: Partial<DefaultProps>], any> = R.compose(
+ (v: any) => defaultProps = v,
+ R.mergeDeepRight(defaultProps),
+)
 
 export default render(<App />, document.getElementById('app'))

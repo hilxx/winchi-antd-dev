@@ -25,7 +25,6 @@ export interface WcFormProps<T extends AO = AO>
  onSubmit?(data: T, defaultData?: T): Promise<any>
 }
 
-
 type Model = React.FC<WcFormProps>
 
 export const WcFormContext = createContext({
@@ -99,7 +98,7 @@ const WcForm: Model = ({
     key={`${c.dataIndex}`}
     {...c}
     hide={index !== currentStep}
-    initialValue={propInitialValues(c.dataIndex)}
+    wcInitVal={propInitialValues(c.dataIndex)}
    />
   ))
 

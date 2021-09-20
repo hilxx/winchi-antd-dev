@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mergeLeft = exports.mergeRight = exports.objToArr = exports.rename = exports.deepProp = exports.prop = void 0;
+exports.mergeDeepRight = exports.mergeRight = exports.mergeDeepLeft = exports.mergeLeft = exports.objToArr = exports.rename = exports.deepProp = exports.prop = void 0;
 const R = require("ramda");
 exports.prop = R.curry((key, o) => typeof key === 'function' ? key(o) : o?.[key]);
 exports.deepProp = R.curry((keys, o) => keys.reduce((cur, k) => exports.prop(k, cur), o));
@@ -10,6 +10,9 @@ exports.rename = R.curry((key, renameKey, obj) => {
     Reflect.deleteProperty(newO, key);
     return newO;
 });
+/**
+ * 转换数字下标的Record
+  */
 const objToArr = (obj) => Object.keys(obj)
     .filter((key) => Number.isInteger(+key))
     .reduce((result, cur) => {
@@ -17,5 +20,13 @@ const objToArr = (obj) => Object.keys(obj)
     return result;
 }, []);
 exports.objToArr = objToArr;
-exports.mergeRight = R.mergeWith((a, b) => b ?? a);
-exports.mergeLeft = R.mergeWith((a, b) => a ?? b);
+/**
+ * @description  {a: undefined  null}, {a: 0} => {a: 0}
+ */
+exports.mergeLeft = R.mergeWith(R.flip(R.defaultTo));
+exports.mergeDeepLeft = R.mergeDeepWith(R.flip(R.defaultTo));
+/**
+ * @description {a: 0}, {a: undefined  null} => {a: 0}
+ */
+exports.mergeRight = R.mergeWith(R.defaultTo);
+exports.mergeDeepRight = R.mergeDeepWith(R.defaultTo);

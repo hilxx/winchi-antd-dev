@@ -3,7 +3,7 @@ import { Button, Divider, Space } from 'antd'
 import HeadTable, { WcHeadTableProps } from './HeadTable'
 import Wc, { R } from 'winchi'
 import { actionLoading } from '@src/utils'
-import { Columns } from '@src/data'
+import { Columns } from '@src/d'
 import { defaultProps, DefaultProps, TableMessageKeys } from '@src/index'
 import styles from './index.less'
 
@@ -43,7 +43,7 @@ const WcTable: Model = ({
  const otherColumns = useMemo(() => ({
   ...defaultProps.columns || {},
   ...useHandleColumns || {},
- }), [useHandleColumns])
+ }), [useHandleColumns, defaultProps])
 
  const columns = useMemo(() =>
   R.compose(

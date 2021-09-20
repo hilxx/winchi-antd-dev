@@ -15,7 +15,7 @@ const FormList: Model = ({
  formListProps: formListProps_ = Wc.obj,
  dataIndex,
  hide,
- initialValue,
+ wcInitVal,
 }) => {
  const { columns, ...formListProps } = formListProps_ as ColumnFormListProps
 
@@ -35,7 +35,7 @@ const FormList: Model = ({
           key={`${c.dataIndex}`}
           {...c}
           formItemProps={{ ...c.formItemProps || {}, ...filed }}
-          initialValue={initialValue}
+          wcInitVal={wcInitVal}
          />
         ))
        }

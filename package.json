@@ -34,6 +34,7 @@
   "dependencies": {
     "@ant-design/icons": "^4.6.4",
     "antd": "^4.16.13",
+    "axios": "^0.21.4",
     "ramda": "^0.27.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",

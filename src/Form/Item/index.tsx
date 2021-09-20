@@ -21,7 +21,7 @@ const WcFormItem: Model = ({
  formItemProps: { width, className = '', style = Wc.obj, ...formItemProps } = Wc.obj,
  formProps = {},
  hide,
- initialValue,
+ wcInitVal,
  ...restColumn
 }) => {
  const { appConfig } = useContext(AppContext)
@@ -43,7 +43,7 @@ const WcFormItem: Model = ({
    <C
     size={appConfig.size}
     options={restColumn.enum}
-    wcInitVal={initialValue ?? formItemProps.initialValue}
+    wcInitVal={wcInitVal ?? formItemProps.initialValue}
     dataIndex={dataIndex}
     {...formProps}
     style={{ width: formProps.width, ...formProps.style || {} }}

@@ -21,8 +21,10 @@ declare const _default: {
     obj: AO;
     arr: any[];
     func: typeof func;
-    isObj: (o: any) => o is object;
-    isEmptyObj: (obj: object) => obj is object;
+    isObj: (o: any) => o is AO;
+    isEmptyObj: (o: AO) => o is AO;
+    isRichObj: (o: AO) => o is AO;
+    isEmpty: (v: any) => boolean;
     computePercent: import("Function/Curry").Curry<(validBit: number, total: number, cur: number) => string>;
     polling: import("Function/Curry").Curry<(r1: number, r2: number, slide: number) => number>;
     mergeStr: import("Function/Curry").Curry<(split: string, rest: string[]) => string>;
@@ -33,8 +35,10 @@ declare const _default: {
     deepProp: import("Function/Curry").Curry<(keys: GetKey[], o: AO) => AO>;
     rename: import("Function/Curry").Curry<(key: any, renameKey: any, obj: any) => any>;
     objToArr: (obj: Record<number, any>) => any[];
-    mergeRight: <U, V>(a: U, b: V) => any;
     mergeLeft: <U, V>(a: U, b: V) => any;
+    mergeDeepLeft: (a: unknown, b: unknown) => any;
+    mergeRight: <U, V>(a: U, b: V) => any;
+    mergeDeepRight: (a: unknown, b: unknown) => any;
     alt: (f1: AF<any[], any>, f2: AF<any[], any>) => (val?: any) => any;
     and: (f1: AF<any[], any>, f2: AF<any[], any>) => (val?: any) => any;
     sep: (...fns: AF<any[], any>[]) => (...rest: any[]) => any;

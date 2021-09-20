@@ -1,2 +1,5 @@
-export declare const isObj: (o: any) => o is object;
-export declare const isEmptyObj: (obj: object) => obj is object;
+import { AO } from './';
+export declare const isObj: (o: any) => o is AO;
+export declare const isEmptyObj: (o: AO) => o is AO;
+export declare const isRichObj: (o: AO) => o is AO;
+export declare const isEmpty: (v: any) => boolean;

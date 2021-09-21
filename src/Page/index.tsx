@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react'
 import { Modal } from 'antd'
 import Wc from 'winchi'
+import { Handles } from '@src/d'
 import WcTable, { WcTableProps } from '../Table'
 import WcForm, { WcFormProps } from '../Form'
-import { defaultProps, TableMessageKeys } from '@src/index'
+import { defaultProps } from '@src/index'
 
 export interface WcPageProps<T extends AO = AO> extends Omit<WcTableProps<T>, 'columns'> {
  columns: WcFormProps<T>['columns']
@@ -32,9 +33,9 @@ const WcPage: Model = ({
   await (values ? onEdit?.(vs, values) : onAdd(values))
   setModalVisible(false)
   setValues(undefined)
- } 
+ }
 
- const handles = useMemo<Partial<Record<TableMessageKeys, AF>>>(() => ({
+ const handles = useMemo<Handles>(() => ({
   onClickEdit: onEdit && ((v) => {
    setModalVisible(true)
    setValues(v)

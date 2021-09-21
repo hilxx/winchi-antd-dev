@@ -1,16 +1,18 @@
-import React, { useContext, useRef, useState } from 'react'
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Button, Dropdown, Menu, Popconfirm, Spin, Tooltip, Tabs } from 'antd'
 import type { TabPaneProps } from 'antd/lib/tabs'
 import { ColumnHeightOutlined, LoadingOutlined, SyncOutlined } from '@ant-design/icons'
-import * as R from 'ramda'
+import Wc, { R } from 'winchi'
 import { defaultProps, Size } from '@src/index'
 import { AppContext } from '@src/App'
-import Table, { WcBaseTableProps, ActionRef as BaseActionRef } from '../Base'
+import WcBaseTable, { WcTypeTableProps, TypeActionRef } from '../TypeTable'
+
 import styles from './index.less'
+import { actionLoading } from '@src/utils'
 
-export type ActionRef = BaseActionRef
+export type HeadActionRef = TypeActionRef
 
-export interface WcHeadTableProps<T extends AO = AO> extends WcBaseTableProps<T> {
+export interface WcHeadTableProps<T extends AO = AO> extends WcTypeTableProps<T> {
  onClickAdd?: AF
  /** 关闭新增删除...more 的控制按键  */
  hideControl?: boolean
@@ -26,7 +28,6 @@ export interface WcHeadTableProps<T extends AO = AO> extends WcBaseTableProps<T>
   /** 删除位置 控制处 */
   Contents?: React.ReactNode[]
  }
- onRemoves?(rows: T): any
  tabsConfig?: {
   tabs?: TabPaneProps[]
   onChange?(key: any): any,
@@ -45,19 +46,34 @@ const WcHeadTable: Model = ({
  hideControl,
  filter,
  controls,
- onRemoves,
+ handles: handles_ = Wc.obj,
  pagination,
  tabsConfig,
  className = '',
  style,
+ preventFirtstRequest,
+ Render = WcBaseTable,
  ...props
 }) => {
  const [loading, setLoading] = useState(false)
  const { appConfig, setAppConfig } = useContext(AppContext)
  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
- const [currentTabKey, setCurrentTabKey] = useState(tabsConfig?.defaultTab)
- const actionRef = useRef<ActionRef>()
+ const [currentTabKey, setCurrentTabKey] = useState(tabsConfig?.defaultTab ?? tabsConfig?.tabs?.[0]?.tabKey)
+ const actionRef = useRef<HeadActionRef>()
  const selectedRowsRef = useRef<any[]>()
+
+ useEffect(() => {
+  preventFirtstRequest || effectTabChange(currentTabKey)
+ }, [])
+
+ const { onRemoves, handles } = useMemo(() => {
+  const { onRemoves, ...handles } = handles_
+
+  return {
+   onRemoves: onRemoves && actionLoading(defaultProps.handlesMessage.onRemoves, onRemoves),
+   handles,
+  }
+ }, [handles_])
 
  const loadingHandle = (b: boolean) => {
   if (actionRef_) {
@@ -83,8 +99,10 @@ const WcHeadTable: Model = ({
  }
 
  const effectTabChange = (key) => {
-  setCurrentTabKey(key)
-  tabsConfig?.onChange?.(key)
+  if (key !== currentTabKey) {
+   tabsConfig?.onChange?.(key)
+   setCurrentTabKey(key)
+  }
   tabsConfig?.requestKey && actionRef.current?.reload({ [tabsConfig.requestKey]: key })
  }
 
@@ -106,7 +124,7 @@ const WcHeadTable: Model = ({
   >
    {
     (['small', 'middle', 'large'] as Size[]).map(key => (
-     <Menu.Item key={key}>{defaultProps.Alias?.[key!]}</Menu.Item>
+     <Menu.Item key={key}>{defaultProps.alias?.[key!]}</Menu.Item>
     ))
    }
   </Menu>
@@ -159,7 +177,7 @@ const WcHeadTable: Model = ({
     />
    </Spin>
 
-   {onClickAdd ? <Button onClick={onClickAdd} type='primary'>{defaultProps.Alias.add}</Button> : null}
+   {onClickAdd ? <Button onClick={onClickAdd} type='primary'>{defaultProps.alias.add}</Button> : null}
 
    {
     controls?.refresh === false ? null :
@@ -224,12 +242,14 @@ const WcHeadTable: Model = ({
    <main className={styles.table}>
     {filter ? filterJSX : null}
     {hideControl ? null : tableHeaderJSX}
-    <Table
+    <Render
+     handles={handles}
      size={appConfig.size}
      actionRef={actionRef}
      onLoading={loadingHandle}
      onSelectRowChange={selectRowChangeHandle}
      pagination={{ ...pagination, size: appConfig.size === 'large' ? 'default' : 'small' }}
+     preventFirtstRequest
      {...props}
     />
    </main>

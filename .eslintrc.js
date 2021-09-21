@@ -25,10 +25,6 @@ module.exports = {
         '@typescript-eslint/explicit-module-boundary-types': 'off',
         '@typescript-eslint/no-non-null-assertion': 'off',
         'no-useless-catch': 'off',
-        'indent': [
-            'error',
-            1
-        ],
         'linebreak-style': [
             'error',
             'windows'

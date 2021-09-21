@@ -1,10 +1,9 @@
 import { render } from 'react-dom'
 import type { SizeType } from 'antd/lib/config-provider/SizeContext'
-import { Button } from 'antd'
+import { Button, Modal } from 'antd'
 import App from './App'
 import Wc, { R } from 'winchi'
-import { Columns } from './d'
-import { WcUploadProps } from './Upload'
+import { DefaultProps } from './d'
 
 export interface LoadingText {
  loadingText?: string
@@ -13,45 +12,16 @@ export interface LoadingText {
 
 export type Size = Exclude<SizeType, void>
 
-/** handles预留字  */
-export type TableMessageKeys = 'onRemoves'
+/** handles 默认情况  */
+export type TableHandleKeys = 'onRemoves'
  | 'onRemove'
  | 'onEdit'
  | 'onAdd'
- | 'onClickEdit'
- | 'onClickRemove'
 
-export type AliasKey = Size |
- 'handle' | 'edit' | 'remove' | 'nextStep' | 'lastStep' | 'submit' | 'add'
+export type AliasKey = Size
+ | 'handle' | 'edit' | 'remove' | 'nextStep' | 'lastStep' | 'submit' | 'add'
 
-export type Alias = Record<AliasKey, string>
-
-export interface DefaultProps {
- dataKey: GetKey
- totalPageKey: GetKey
- pageSize: number
- requestPageKey: string
- requestPageSizeKey: string
- defaultPage: number
- Alias: Alias
- /** 
-  * @key: 事件名
-  * @value: {column, loadingText: 开启后会成为loading提示文字}
-  * @description 新增column，出现在当前column的右边，事件调用props.handels
-  **/
- columns: Record<string, Columns>
- /** 
- * @key: 事件名
- * @value: interface  LoadingText
- * @description 触发改事件，触发相应Loading
- **/
- handlesMessage: Partial<Record<TableMessageKeys, LoadingText>> & AO
- ModalWidth: {
-  form?: string | number
-  image?: string | number
- },
- upload: Omit<WcUploadProps, 'fileList'>
-}
+export type Alias = Record<AliasKey | string, string>
 
 const alias: Alias = {
  small: '紧凑',
@@ -73,13 +43,13 @@ export let defaultProps: DefaultProps = {
  requestPageSizeKey: 'pageSize',
  defaultPage: 0,
  pageSize: 40,
- Alias: alias,
+ alias,
  columns: {
   handle: {
    title: '从出生那年就飘着',
    btnsWantClick: {
+    onRemove: <Button type='link' style={{ padding: 0 }} danger>{alias.remove}</Button>,
     onClickEdit: alias.edit,
-    onClickRemove: <Button type='link' style={{ padding: 0 }} danger>{alias.remove}</Button>,
    }
   }
  },
@@ -101,6 +71,19 @@ export let defaultProps: DefaultProps = {
    errText: '修改完成',
   },
  },
+ async handleClickBefore(name, f, params) {
+  switch (name) {
+   case 'onRemove':
+   case 'onRemoves':
+    return new Promise(resolve => Modal.confirm({
+     title: '确定删除吗？',
+     onOk() {
+       resolve(f(params))
+     }
+    }))
+   default: return f(params)
+  }
+ },
  ModalWidth: {
   form: 750,
  },
@@ -110,7 +93,9 @@ export let defaultProps: DefaultProps = {
 
 export const setGlobalConfig: AF<[o: Partial<DefaultProps>], any> = R.compose(
  (v: any) => defaultProps = v,
- R.mergeDeepRight(defaultProps),
+ Wc.mergeDeepLeft(R.__, defaultProps),
 )
 
 export default render(<App />, document.getElementById('app'))
+
+export * from './d.d'

@@ -17,9 +17,8 @@ exports.fork = fork;
 const identify = v => () => v;
 exports.identify = identify;
 exports.curryLazy = R.compose(R.curry, fn => new Proxy(fn, {
-    get(target, key, receiver) {
-        const v = Reflect.get(target, key, receiver);
-        return key === 'length' ? v + 1 : v;
+    apply(target, thisArg, args) {
+        return (...rest) => Reflect.apply(target, thisArg, [...args, ...rest]);
     }
 }));
 const asyncCompose = (...fns) => {

@@ -6,7 +6,7 @@ import { Columns } from '@src/d'
 import { defaultProps, DefaultProps } from '..'
 import Wc, { R } from 'winchi'
 
-export interface ActionRef {
+export interface BaseActionRef {
  reload(o?: AO): Promise<any>
  resetSelectedRows(keys?: (AO | string | number)[]): any
 }
@@ -14,10 +14,11 @@ export interface ActionRef {
 export interface WcBaseTableProps<T extends AO = AO> extends Omit<TableProps<T>, 'columns' | 'rowSelection'> {
  columns: Columns<T>[]
  request?(params?: any[]): Promise<AO>
- composeRequest?(params?: AO, fn?: AF): Promise<AO>
+ composeRequest?(params?: AO, fn?: AF): Promise<any>
+ /** 覆盖全局配置  */
  config?: DefaultProps
  pageSize?: number
- actionRef?: React.RefObject<ActionRef | undefined>
+ actionRef?: React.RefObject<BaseActionRef | undefined>
  /** 
   * @default checkbox
   * @false 关闭选择
@@ -25,6 +26,9 @@ export interface WcBaseTableProps<T extends AO = AO> extends Omit<TableProps<T>,
  rowSelection?: TableRowSelection<T> | false
  onLoading?(boolean): any
  onSelectRowChange?(keys: Key[], rows: T[]): any
+ preventFirtstRequest?: boolean
+ /** 替代Table组件, 默认是 antd.Table */
+ Render?: React.ComponentType
 }
 
 type Model = React.FC<WcBaseTableProps>
@@ -32,7 +36,6 @@ type Model = React.FC<WcBaseTableProps>
 const WcBaseTable: Model = ({
  request: request_ = () => null,
  composeRequest: composeRequest_,
- config: config_ = defaultProps,
  pageSize = defaultProps.pageSize || 40,
  pagination: pagination_ = Wc.obj,
  rowSelection: rowSelection_ = Wc.obj,
@@ -40,15 +43,13 @@ const WcBaseTable: Model = ({
  rowKey: rowKey_,
  onLoading,
  onSelectRowChange,
+ preventFirtstRequest,
+ Render = Table,
  ...props
 }) => {
- const config = useMemo((): DefaultProps => ({
-  ...defaultProps,
-  ...config_,
- }), [config_])
  const [spinning, setSpinning] = useState(true)
  const [data, setData] = useState<AO[]>([])
- const [currentPage, setCurrentPage] = useState(config.defaultPage || 0)
+ const [currentPage, setCurrentPage] = useState(defaultProps.defaultPage || 0)
  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
  const rowKey = useMemo<string>(() => (typeof rowKey_ === 'function' ? rowKey() : rowKey_) ?? 'id', [rowKey_])
  const totalPageRef = useRef<number>(0)
@@ -56,6 +57,7 @@ const WcBaseTable: Model = ({
  const debouncePromiseRef = useRef<AF>(Wc.debouncePromise(setData))
 
  useEffect(() => {
+  if (currentPage === defaultProps.defaultPage && totalPageRef.current === 0 && preventFirtstRequest) return
   request()
  }, [currentPage])
 
@@ -79,18 +81,22 @@ const WcBaseTable: Model = ({
  }
 
  const effectData: AF = d => {
-  const newData = Wc.prop(config.dataKey as any, d)
-  const totalPage = Wc.prop(config.totalPageKey as any, d)
+  const newData = Wc.prop(defaultProps.dataKey, d)
+  const totalPage = Wc.prop(defaultProps.totalPageKey, d)
   const isRefresh = isRefreshRef.current
   totalPageRef.current = totalPage
   setData(isRefresh ? newData : [...data, ...newData])
  }
 
+ /**
+  * @description 重命名page & size
+  * @returns merge函数
+  */
  const mergePageParams = R.compose(
   R.merge,
   ({ page = 0, size }: { page?: number, size: number }) => ({
-   [config.requestPageKey]: page,
-   [config.requestPageSizeKey]: size,
+   [defaultProps.requestPageKey]: page,
+   [defaultProps.requestPageSizeKey]: size,
   })
  )
 
@@ -134,17 +140,17 @@ const WcBaseTable: Model = ({
  }
 
  if (actionRef) {
-  (actionRef as { current: ActionRef }).current = {
+  (actionRef as { current: BaseActionRef }).current = {
    reload(params = {}) {
     isRefreshRef.current = true
-    return request(mergePageParams({ page: config.defaultPage, size: pageSize })(params))
+    return request(mergePageParams({ page: defaultProps.defaultPage, size: pageSize })(params))
    },
    resetSelectedRows: effectSelectedRowKeys,
   }
  }
 
  return (
-  <Table
+  <Render
    {...props}
    rowKey={rowKey}
    dataSource={data}

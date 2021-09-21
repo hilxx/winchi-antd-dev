@@ -110,7 +110,7 @@ const WcForm: Model = ({
       size={appConfig.size}
       onClick={() => setCurrentStep(currentStep - 1)}
      >
-      {defaultProps.Alias.lastStep}
+      {defaultProps.alias.lastStep}
      </Button>
      : null
    }
@@ -119,7 +119,7 @@ const WcForm: Model = ({
     loading={currentStep + 1 === columns?.length && loading}
     onClick={() => clickNextHandle(currentStep + 1)}
    >
-    {currentStep === stepMaxNum ? defaultProps.Alias.submit : defaultProps.Alias.nextStep}
+    {currentStep === stepMaxNum ? defaultProps.alias.submit : defaultProps.alias.nextStep}
    </Button>
   </footer>
  )

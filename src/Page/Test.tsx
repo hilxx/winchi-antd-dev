@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import Page from '../Page'
 import { setGlobalConfig, Columns } from '@src/index'
 import axios from 'axios'
-import * as R from 'ramda'
 
 const bannerColumns: Columns[] = [
  {
@@ -20,16 +19,11 @@ const bannerColumns: Columns[] = [
   title: '轮播图类型',
   dataIndex: 'type',
   formType: 'radio',
-  enum: [
-   {
-    label: '其它',
-    value: 'Other',
-   },
-   {
-    label: '链接',
-    value: 'Link',
-   }
-  ]
+  tableType: 'alias',
+  enum: {
+   Other: '其它',
+   Link: '链接'
+  }
  }
 ]
 
@@ -49,16 +43,10 @@ const learnColumns: Columns[] = [
  {
   title: '类型',
   dataIndex: 'type',
-  enum: [
-   {
-    label: '视频',
-    value: 'VIDEO',
-   },
-   {
-    label: '网页',
-    value: 'WEBPAGE',
-   },
-  ],
+  enum: {
+  VIDEO: '视频',
+  WEBPAGE: '网页',
+  },
  }
 ]
 
@@ -70,24 +58,25 @@ export default () => {
    totalPageKey: 'totalPages',
    dataKey: 'content',
    requestPageSizeKey: 'size',
-   columns: {
-    title: {
-     dataIndex: 'title',
+   columns: [
+    {
      title: '标题',
+     dataIndex: 'title',
     },
-    weight: {
+    {
      title: '权重',
      dataIndex: 'weight',
     },
-    updateTime: {
+    {
      title: '更新时间',
      dataIndex: 'updateTime',
      hideForm: true,
     },
-    handle: {
+    {
+     dataIndex: '@handle',
      title: '操作',
     },
-   },
+   ]
   })
   setColumns([])
  }, [])
@@ -98,7 +87,7 @@ export default () => {
    url: requestUrl,
    params,
    headers: {
-    Authorization: 'bearer a9506f2c-503e-4c49-aa14-0a70cc1ae95a',
+    Authorization: 'bearer 8d6bcc5e-b439-4819-82b7-2d3bc3ba9751',
    }
   }).then(d => d.data.data)
 
@@ -109,7 +98,7 @@ export default () => {
 
     }}
     columns={columns}
-    handles={{
+    methods={{
      onRemove() { return new Promise(resolve => setTimeout(resolve, 3000)) },
      onEdit() { return new Promise(resolve => resolve(1)) },
     }}
@@ -117,18 +106,18 @@ export default () => {
     tabsConfig={{
      onChange(v) {
       setColumns(
-       v === 'https://test.vvaryun.com/amway/c_api/api/v1/admin/carousel/map/all'
+       v === '/api/carousel/map/all'
         ? bannerColumns
         : learnColumns
       )
      },
      tabs: [
       {
-       tabKey: 'https://test.vvaryun.com/amway/c_api/api/v1/admin/carousel/map/all',
+       tabKey: '/api/carousel/map/all',
        tab: '轮播图',
       },
       {
-       tabKey: 'https://test.vvaryun.com/amway/c_api/api/v1/admin/plant/contents',
+       tabKey: '/api/plant/contents',
        tab: '了解植物研发中心',
       },
      ],

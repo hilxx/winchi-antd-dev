@@ -44,15 +44,17 @@ export let defaultProps: DefaultProps = {
  defaultPage: 0,
  pageSize: 40,
  alias,
- columns: {
-  handle: {
+ columns: [
+  {
    title: '从出生那年就飘着',
-   btnsWantClick: {
+   dataIndex: '@handle',
+   handles: {
     onRemove: <Button type='link' style={{ padding: 0 }} danger>{alias.remove}</Button>,
     onClickEdit: alias.edit,
    }
   }
- },
+ ],
+
  handlesMessage: {
   onRemoves: {
    loadingText: '正在删除',
@@ -78,7 +80,7 @@ export let defaultProps: DefaultProps = {
     return new Promise(resolve => Modal.confirm({
      title: '确定删除吗？',
      onOk() {
-       resolve(f(params))
+      resolve(f(params))
      }
     }))
    default: return f(params)

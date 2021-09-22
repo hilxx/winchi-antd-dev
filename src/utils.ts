@@ -15,3 +15,6 @@ export const actionLoading = Wc.curryLazy(
   }
  }
 )
+
+
+export const propDataIndex: AF = Wc.prop('dataIndex')

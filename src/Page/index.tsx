@@ -18,7 +18,7 @@ const WcPage: Model = ({
  columns,
  formProps = Wc.obj,
  modalWidth = defaultProps.ModalWidth.form,
- handles: { onAdd, onEdit, ...handles_ } = Wc.obj,
+ methods: { onAdd, onEdit, ...methods_ } = Wc.obj,
  ...props
 }) => {
  const [modelVisible, setModalVisible] = useState(false)
@@ -35,20 +35,20 @@ const WcPage: Model = ({
   setValues(undefined)
  }
 
- const handles = useMemo<Handles>(() => ({
+ const methods = useMemo<Handles>(() => ({
   onClickEdit: onEdit && ((v) => {
    setModalVisible(true)
    setValues(v)
   }),
-  ...handles_,
- }), [handles_, onEdit])
+  ...methods_,
+ }), [methods_, onEdit])
 
  return (
   <section>
    <WcTable
     onClickAdd={clickAddHandle}
     columns={flatColumns}
-    handles={handles}
+    methods={methods}
     {...props}
    />
    <Modal

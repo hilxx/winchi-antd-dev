@@ -31,6 +31,9 @@ declare const _default: {
     classifyAos: import("Function/Curry").Curry<(prop: AF<any[], any>, arr: AO[]) => AO>;
     flatArrayShallow: import("Function/Curry").Curry<(index: number | null | undefined, arr: any[]) => any>;
     propLength: AF<any[], any>;
+    uniqueWith: import("Function/Curry").Curry<(choose: AF<any[], any>, prop: string | AF<any[], any>, arr: any[]) => any[]>;
+    uniqueLeft: import("Function/Curry").Curry<(prop: string | AF<any[], any>, arr: any[]) => any[]>;
+    uniqueRight: import("Function/Curry").Curry<(prop: string | AF<any[], any>, arr: any[]) => any[]>;
     prop: import("Function/Curry").Curry<(key: GetKey, o: AO) => any>;
     deepProp: import("Function/Curry").Curry<(keys: GetKey[], o: AO) => AO>;
     rename: import("Function/Curry").Curry<(key: any, renameKey: any, obj: any) => any>;

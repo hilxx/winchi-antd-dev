@@ -73,7 +73,14 @@ var getDevConfig = function (_a) {
                                 port: port,
                                 hot: true,
                                 open: false,
-                                historyApiFallback: true
+                                historyApiFallback: true,
+                                proxy: {
+                                    '/api': {
+                                        target: 'https://test.vvaryun.com/amway/c_api/api/v1/admin',
+                                        pathRewrite: { '^/api': '' },
+                                        secure: false
+                                    }
+                                }
                             }
                         }];
             }

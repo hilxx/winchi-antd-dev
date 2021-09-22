@@ -5,9 +5,7 @@ import Wc from 'winchi'
 import type { Columns, ColumnFormListProps } from '@src/d'
 import ResolveChidren, { WcResolveChidrenProps } from '../ResolveChidren'
 
-export interface WcFormListProps<T extends AO = AO> extends Columns<T>, WcResolveChidrenProps {
-
-}
+export type WcFormListProps<T extends AO = AO> = Columns<T> & WcResolveChidrenProps
 
 type Model = React.FC<WcFormListProps>
 

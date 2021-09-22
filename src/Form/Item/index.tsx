@@ -7,9 +7,7 @@ import styles from './index.less'
 import { propFormTypeFC } from '..'
 import { WcResolveChidrenProps } from '../ResolveChidren'
 
-export interface WcFormItemProps<T extends AO = AO> extends Columns<T>, WcResolveChidrenProps {
-
-}
+export type WcFormItemProps<T extends AO = AO> = Columns<T> & WcResolveChidrenProps
 
 type Model = React.FC<WcFormItemProps>
 
@@ -22,7 +20,6 @@ const WcFormItem: Model = ({
  formProps = {},
  hide,
  wcInitVal,
- ...restColumn
 }) => {
  const { appConfig } = useContext(AppContext)
  const C = propFormTypeFC(formType)
@@ -42,7 +39,6 @@ const WcFormItem: Model = ({
   >
    <C
     size={appConfig.size}
-    options={restColumn.enum}
     wcInitVal={wcInitVal ?? formItemProps.initialValue}
     dataIndex={dataIndex}
     {...formProps}

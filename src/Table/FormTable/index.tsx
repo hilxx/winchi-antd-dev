@@ -23,7 +23,6 @@ const WcFormTable: Model = ({
   actionRef.current?.resetSelectedRows(Array.isArray(value) ? value : [value])
  }, [value])
 
-
  return (
   <WcTable
    hideControl

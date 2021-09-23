@@ -1,135 +1,217 @@
 import React, { useMemo } from 'react'
-import { Button, Divider, Space } from 'antd'
+import type { ImageProps, ButtonProps } from 'antd'
+import { Button, Divider, Space, Image } from 'antd'
 import Wc, { R } from 'winchi'
 import type { Columns, Handles } from '@src/d'
 import WcBaseTable, { WcBaseTableProps, BaseActionRef } from '../Base'
-import { defaultProps } from '@src/index'
+import { useWcConfig } from '@src/hooks'
+import { UseWcConfigRender } from '@src/App'
 import { actionLoading, propDataIndex } from '@src/utils'
 import styles from './index.less'
 
-export type TableType = 'alias' | 'image' | 'handles'
+export type TableType = 'alias' | 'images' | 'handles'
+export interface TableTypeCombineProps<T extends AO = AO> {
+  type: TableType
+  getProps?(d: T): { wrapClassName?: string } & (ImageProps | ButtonProps | React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>)
+}
 
 export interface WcTypeTableProps<T extends AO = AO> extends WcBaseTableProps<T> {
- alias?: AO
- methods?: Handles
+  alias?: AO
+  methods?: Handles
 }
 export type TypeActionRef = BaseActionRef
 
 type Model = React.FC<WcTypeTableProps>
 
 const WcTypeTable: Model = ({
- columns: columns_,
- methods: methods_ = Wc.obj,
- alias: alias_ = defaultProps.alias,
- Render = WcBaseTable,
- ...props
+  columns: columns_,
+  methods: methods_ = Wc.obj,
+  alias: alias_ = Wc.obj,
+  Render = WcBaseTable,
+  ...props
 }) => {
- const alias = useMemo(() => alias_ === defaultProps.alias
-  ? alias_ : { ...defaultProps.alias, ...alias_ }, [alias_])
+  const { wcConfig } = useWcConfig()
+  const alias = useMemo(() => ({ ...wcConfig.alias, ...alias_ }), [alias_, wcConfig.alias])
 
- /** handle新增 消息通知  */
- const methods = useMemo<Handles>(() =>
-  Wc.messageComposeMethod(actionLoading, defaultProps.handlesMessage, methods_), [methods_])
+  /** handle新增 消息通知  */
+  const methods = useMemo<Handles>(() =>
+    Wc.messageComposeMethod(actionLoading, wcConfig.handlesMessage, methods_), [methods_])
 
- const columns = useMemo(R.compose(
-  _processColumns(methods, alias),
-  R.map(_forceHideExhibit),
-  Wc.uniqueLeft(propDataIndex),
-  R.concat(columns_),
-  Wc.identify(defaultProps.columns || Wc.arr)
- ), [columns_, alias, methods])
+  const columns = useMemo(R.compose(
+    _pipeColumns(methods, alias),
+    R.filter((c: any) => c.hideTable !== true) as AF,
+    R.map(_forceHideExhibit),
+    Wc.uniqueLeft(propDataIndex),
+    R.concat(columns_),
+    Wc.identify(wcConfig.columns || Wc.arr),
+  ), [columns_, alias, methods, wcConfig.columns])
 
- return (
-  <Render
-   columns={columns}
-   {...props}
-  />
- )
+  return (
+    <Render
+      columns={columns}
+      {...props}
+    />
+  )
 }
 
-/**
- * 
+interface ProcessTypeParamas {
+  column: Columns
+  methods: AO
+  alias: AO
+  getProps?: TableTypeCombineProps['getProps']
+}
+
+const _processTypeMap: Record<TableType, AF<[ProcessTypeParamas], Columns>> = {
+  handles({ column: c, methods, getProps }) {
+    return {
+      ...c,
+      render(_: any, record: any, index) {
+        const { wrapClassName = '', ...props } = getProps?.(record) || Wc.obj
+        const node = (
+          <Space className={wrapClassName} size={1} split={<Divider type='vertical' />}>
+            {
+              Object.keys(c.handles)
+                .filter(R.prop(R.__, methods))
+                .map((key) => (
+                  <UseWcConfigRender key={key}>
+                    {
+                      ({ wcConfig }) => {
+                        const node = c.handles[key]
+                        const clickHandle = (params?: any) =>
+                          wcConfig.handleClickBefore
+                            ? wcConfig.handleClickBefore(key, methods[key]!, record)
+                            : methods[key]?.(record, params)
+
+                        switch (typeof node) {
+                          case 'function': return node({ onClick: clickHandle, record })
+                          case 'string':
+                            return (
+                              <Button
+                                style={{ padding: 0 }}
+                                className={styles['handle-btn']}
+                                size='small'
+                                onClick={clickHandle}
+                                type='link'
+                                {...props}
+                              >
+                                {node}
+                              </Button >
+                            )
+                          default: return <span onClick={clickHandle}>{node}</span>
+                        }
+                      }
+                    }
+                  </UseWcConfigRender>
+                )
+                )
+            }
+          </Space >
+        )
+        return c.render ? c.render(node, record, index) : node
+      }
+    }
+  },
+  alias({ column: c, alias, getProps }) {
+    return {
+      ...c,
+      render(d, record, index) {
+        const { wrapClassName = '', className = '', ...props } = getProps?.(record) || Wc.obj
+        const v = c.enum?.[d] ?? alias[d] ?? d
+        return <main className={`${wrapClassName} ${className}`} {...props}>
+          {c.render ? c.render(v, record, index) : v}
+        </main>
+      },
+    }
+  },
+  images({ column: c, getProps }) {
+    return {
+      ...c,
+      render(images, record, index) {
+        const { wrapClassName = '', ...props } = getProps?.(record) || Wc.obj
+
+        const arr = Array.isArray(images) ? images : [images]
+        const node = (
+          <main className={`${styles.imgs} ${wrapClassName}`} >
+            {
+              arr.map((url, index) => (
+                <Image width={100} key={`${url}${index}`} src={url} {...props} />
+              ))
+            }
+          </main >
+        )
+        return c.render ? c.render(node, record, index) : node
+      }
+    }
+  }
+}
+
+/** 
  * @description ${dataIndex}@开头，除了table隐藏显示
  */
 const _forceHideExhibit = (c: Columns): Columns => `${propDataIndex(c)}`.startsWith('@')
- ? { ...c, hideForm: true, hideDetail: true }
- : c
-
-/**  columns新增click事件  */
-const _processClick = (c: Columns, methods: AO) =>
- Reflect.has(methods, propDataIndex(c))
   ? {
-   ...c,
-   render(d, record, index) {
-    return <div onClick={() => propDataIndex(c)(record)}>{c.render?.(d, record, index)}</div>
-   }
+    ...c,
+    hideForm: true,
+    hideDetail: true,
+    hideTable: c.tableType === 'handles' && Wc.isEmptyObj(c.handles || Wc.obj) ? true : c.hideTable,
   }
   : c
 
-const _processTypeMap: Record<TableType, AF<any, Columns>> = {
- handles(c: Columns, methods: Handles) {
-  return {
-   ...c,
-   render(_: any, record: any) {
-    return (
-     <Space size={1} split={<Divider type='vertical' />}>
-      {
-       Object.keys(c.handles)
-        .filter(R.prop(R.__, methods))
-        .map((key, index) => {
-         const node = c.handles[key]
-         const clickHandle = (params?: any) =>
-          defaultProps.handleClickBefore
-           ? defaultProps.handleClickBefore(key, methods[key]!, record)
-           : methods[key]?.(record, params)
+/**
+ * @description fetchRenderValue处理
+ */
+const _processFetchRenderValue: AF = (c: Columns): Columns => c.fetchRenderValue && c.render
+  ? {
+    ...c,
+    render(_, record, index) {
+      return c.render!(c.fetchRenderValue!(record), record, index)
+    }
+  } : c
 
-         switch (typeof node) {
-          case 'function': return node({ onClick: clickHandle, record })
-          case 'string':
-           return (
-            <Button
-             key={index}
-             style={{ padding: 0 }}
-             className={styles['handle-btn']}
-             size='small'
-             onClick={clickHandle}
-             type='link'>{node}</Button >
-           )
-          default: return <span key={index} onClick={clickHandle}>{node}</span>
-         }
-        })
+/**  columns新增事件  */
+const _processHandle = R.curry(
+  (methods: AO, c: Columns) =>
+    Reflect.has(methods, propDataIndex(c))
+      ? {
+        ...c,
+        render(d, record, index) {
+          return <div onClick={() => propDataIndex(c)(record)}>{c.render?.(d, record, index)}</div>
+        }
       }
-     </Space >
-    )
-   }
-  }
- },
- alias(c: Columns, _, alias: AO) {
-  return {
-   ...c,
-   render(d, record, index) {
-    const v = c.enum?.[d] ?? alias[d] ?? d
-    return c.render ? c.render(v, record, index) : v
-   },
-  }
- },
- image(c: Columns) {
-  return c
- },
-}
-
-const _propsPipeMap = R.curry(
- (map: AO, key?) => {
-  const arr = (Array.isArray(key) ? key : [key]).map(k => map[k] ? map[k] : v => v)
-  return (c, ...args) => arr.reduce((lastC, f) => f(lastC, ...args), c)
- }
+      : c
 )
 
-const _processColumns = (handles: Handles, alias: AO) => R.compose(
- R.map((c: Columns) => _processClick(c, handles)),
- R.map((c: Columns) =>
-  Wc.isEmpty(c.tableType) ? c : _propsPipeMap(_processTypeMap)(c.tableType)(c, handles, alias)
- ),
+const _propsTypeMap = R.curry(
+  (map: AO, types: TableTypeCombineProps[] | TableTypeCombineProps) => {
+    const fns = (Array.isArray(types) ? types : [types])
+      .map(k => map[k.type]
+        ? (conf: AO) => map[k.type]({ ...conf, getProps: k.getProps } as ProcessTypeParamas)
+        : v => v
+      )
+
+    return (conf: ProcessTypeParamas) =>
+      fns.reduceRight((lastC, f) => f(lastC), conf)
+  }
+)
+
+const _typeUnanimous = (c: Columns) => {
+  switch (typeof c.tableType) {
+    case 'string':
+      return { ...c, tableType: { type: c.tableType } }
+    default: return c
+  }
+}
+
+/** render顺序从上到下  */
+const _pipeColumns = (methods: AO, alias: AO) => R.compose(
+  R.map(_processFetchRenderValue),
+  R.map((c: Columns) =>
+    Wc.isEmpty(c.tableType)
+      ? c
+      : _propsTypeMap(_processTypeMap)(c.tableType as TableTypeCombineProps)({ column: c, methods, alias })
+  ),
+  R.map(_typeUnanimous),
+  R.map(_processHandle(methods)),
 )
 
 export default React.memo<Model>(WcTypeTable)

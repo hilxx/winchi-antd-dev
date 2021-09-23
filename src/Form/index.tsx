@@ -1,11 +1,10 @@
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import React, { createContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { FormInstance } from 'antd'
 import { Form, Button, Steps, Divider } from 'antd'
 import { LoadingOutlined } from '@ant-design/icons'
 import Wc, { R } from 'winchi'
 import { Columns } from '@src/d'
-import { AppContext } from '@src/App'
-import { defaultProps } from '@src/index'
+import { useWcConfig } from '@src/hooks'
 import { propFormTypeFC } from './formType'
 import ResolveChidren from './ResolveChidren'
 
@@ -39,7 +38,7 @@ const WcForm: Model = ({
  className = '',
  ...props
 }) => {
- const { appConfig } = useContext(AppContext)
+ const { wcConfig } = useWcConfig()
  const [loading, setLoading] = useState(false)
  const [currentStep, setCurrentStep] = useState(0)
  const formRef = useRef<FormInstance>(null)
@@ -107,19 +106,19 @@ const WcForm: Model = ({
    {
     stepMaxNum && currentStep
      ? <Button
-      size={appConfig.size}
+      size={wcConfig.size}
       onClick={() => setCurrentStep(currentStep - 1)}
      >
-      {defaultProps.alias.lastStep}
+      {wcConfig.alias.lastStep}
      </Button>
      : null
    }
    <Button
-    size={appConfig.size}
+    size={wcConfig.size}
     loading={currentStep + 1 === columns?.length && loading}
     onClick={() => clickNextHandle(currentStep + 1)}
    >
-    {currentStep === stepMaxNum ? defaultProps.alias.submit : defaultProps.alias.nextStep}
+    {currentStep === stepMaxNum ? wcConfig.alias.submit : wcConfig.alias.nextStep}
    </Button>
   </footer>
  )

@@ -2,9 +2,10 @@ import type { ColumnProps } from 'antd/lib/table'
 import type { FormItemProps, FormListProps } from 'antd/lib/form'
 import type { TableHandleKeys } from '@src/index'
 import type { FormProps, FormType } from '@src/Form'
-import type { TableType } from '@src/Table'
+import type { TableType, TableTypeCombineProps } from '@src/Table'
 import type { WcUploadProps } from './Upload'
-import React from 'react'
+
+export type Size = Exclude<SizeType, void>
 
 export interface LayoutSize {
   width?: string | number
@@ -18,7 +19,7 @@ export interface ColumnFormListProps extends Omit<FormListProps, 'label' | 'name
   columns: Columns[]
 }
 
-export type Handles<T extends AO = AO> = Partial<Record<TableHandleKeys | string, (row: T | T[], ...rest: any[]) => any>>
+export type Handles<T extends AO = AO> = Partial<Record<TableHandleKeys & string, (row: T | T[], ...rest: any[]) => any>>
 
 export interface Columns<T extends AO = AO> extends ColumnProps<T> {
   /** 
@@ -34,7 +35,14 @@ export interface Columns<T extends AO = AO> extends ColumnProps<T> {
    * @用作表单：优先级低于formProps.options
     */
   enum?: Record<string | number, React.ReactNode>
-  tableType?: TableType | TableType[]
+  /** 
+   * @description column.render的返回值
+    */
+  fetchRenderValue?(record: T): React.ReactNode
+  tableType?: TableType | TableTypeCombineProps | (TableType | TableTypeCombineProps)[]
+  /** 
+   * @type [compose的顺序，从后到前] 
+   */
   formType?: FormType | FormType[]
   /**
    * @description <Form.FormItem {...props} /> 
@@ -49,13 +57,34 @@ export interface Columns<T extends AO = AO> extends ColumnProps<T> {
   hideDetail?: boolean
 }
 
-export interface DefaultProps {
+export type AliasKey = Size
+  | 'handle' | 'edit' | 'remove' | 'nextStep' | 'lastStep' | 'submit' | 'add'
+
+export type Alias = Record<AliasKey | string, string>
+
+export interface LoadingText {
+  loadingText?: string
+  errText?: string
+}
+
+/** handles 默认情况  */
+export type TableHandleKeys = 'onRemoves'
+  | 'onRemove'
+  | 'onEdit'
+  | 'onAdd'
+
+export interface WcConfig {
+  size?: Size
   dataKey: GetKey
   totalPageKey: GetKey
   pageSize: number
   requestPageKey: string
   requestPageSizeKey: string
   defaultPage: number
+  tableScroll: {
+    x?: number
+    y?: number
+  }
   /** 
    * @description 默认别名
    */
@@ -73,10 +102,7 @@ export interface DefaultProps {
   **/
   handlesMessage: Partial<Record<TableHandleKeys, LoadingText>> & AO
   handleClickBefore(name?: string | TableHandleKeys, fn: AF, args: any[]): any
-  ModalWidth: {
-    form?: string | number
-    image?: string | number
-  },
+  ModalWidth: string | number,
   upload: Omit<WcUploadProps, 'fileList'>
 }
 

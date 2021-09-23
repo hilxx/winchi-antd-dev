@@ -2,9 +2,9 @@ import React, { useState, useMemo } from 'react'
 import { Modal } from 'antd'
 import Wc from 'winchi'
 import { Handles } from '@src/d'
+import { useWcConfig } from '@src/hooks'
 import WcTable, { WcTableProps } from '../Table'
 import WcForm, { WcFormProps } from '../Form'
-import { defaultProps } from '@src/index'
 
 export interface WcPageProps<T extends AO = AO> extends Omit<WcTableProps<T>, 'columns'> {
  columns: WcFormProps<T>['columns']
@@ -17,13 +17,14 @@ type Model = React.FC<WcPageProps>
 const WcPage: Model = ({
  columns,
  formProps = Wc.obj,
- modalWidth = defaultProps.ModalWidth.form,
+ modalWidth: modalWidth_,
  methods: { onAdd, onEdit, ...methods_ } = Wc.obj,
  ...props
 }) => {
  const [modelVisible, setModalVisible] = useState(false)
  const [values, setValues] = useState<AO>()
  const flatColumns = useMemo(() => columns.flat(), [columns])
+ const modalWidth = modalWidth_ ?? useWcConfig().wcConfig.ModalWidth
 
  const clickAddHandle = onAdd && (() => {
   setModalVisible(true)
@@ -57,7 +58,6 @@ const WcPage: Model = ({
     footer={null}
     confirmLoading
     width={modalWidth}
-   // destroyOnClose
    >
     <WcForm
      initialValues={values}

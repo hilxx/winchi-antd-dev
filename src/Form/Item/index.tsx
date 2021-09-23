@@ -1,8 +1,8 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import Wc from 'winchi'
 import { Form } from 'antd'
 import type { Columns } from '@src/d'
-import { AppContext } from '@src/App'
+import { useWcConfig } from '@src/hooks'
 import styles from './index.less'
 import { propFormTypeFC } from '..'
 import { WcResolveChidrenProps } from '../ResolveChidren'
@@ -21,7 +21,7 @@ const WcFormItem: Model = ({
  hide,
  wcInitVal,
 }) => {
- const { appConfig } = useContext(AppContext)
+ const { wcConfig } = useWcConfig()
  const C = propFormTypeFC(formType)
 
  return (
@@ -38,7 +38,7 @@ const WcFormItem: Model = ({
    }}
   >
    <C
-    size={appConfig.size}
+    size={wcConfig.size}
     wcInitVal={wcInitVal ?? formItemProps.initialValue}
     dataIndex={dataIndex}
     {...formProps}

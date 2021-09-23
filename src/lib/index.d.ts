@@ -40,8 +40,8 @@ declare const _default: {
     objToArr: (obj: Record<number, any>) => any[];
     mergeLeft: <U, V>(a: U, b: V) => any;
     mergeDeepLeft: (a: unknown, b: unknown) => any;
-    mergeRight: <U, V>(a: U, b: V) => any;
-    mergeDeepRight: (a: unknown, b: unknown) => any;
+    mergeRight: import("Function/Curry").Curry<(head: unknown, head: unknown) => any>;
+    mergeDeepRight: import("Function/Curry").Curry<(head: unknown, head: unknown) => any>;
     alt: (f1: AF<any[], any>, f2: AF<any[], any>) => (val?: any) => any;
     and: (f1: AF<any[], any>, f2: AF<any[], any>) => (val?: any) => any;
     sep: (...fns: AF<any[], any>[]) => (...rest: any[]) => any;

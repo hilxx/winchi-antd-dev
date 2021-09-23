@@ -28,5 +28,5 @@ exports.mergeDeepLeft = R.mergeDeepWith(R.flip(R.defaultTo));
 /**
  * @description {a: 0}, {a: undefined  null} => {a: 0}
  */
-exports.mergeRight = R.mergeWith(R.defaultTo);
-exports.mergeDeepRight = R.mergeDeepWith(R.defaultTo);
+exports.mergeRight = R.curryN(2, R.mergeWith(R.defaultTo));
+exports.mergeDeepRight = R.curryN(2, R.mergeDeepWith(R.defaultTo));

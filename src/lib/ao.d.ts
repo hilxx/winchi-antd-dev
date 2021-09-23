@@ -15,5 +15,5 @@ export declare const mergeDeepLeft: (a: unknown, b: unknown) => any;
 /**
  * @description {a: 0}, {a: undefined  null} => {a: 0}
  */
-export declare const mergeRight: <U, V>(a: U, b: V) => any;
-export declare const mergeDeepRight: (a: unknown, b: unknown) => any;
+export declare const mergeRight: import("Function/Curry").Curry<(head: unknown, head: unknown) => any>;
+export declare const mergeDeepRight: import("Function/Curry").Curry<(head: unknown, head: unknown) => any>;

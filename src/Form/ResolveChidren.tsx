@@ -1,5 +1,5 @@
 import React from 'react'
-import Wc, { R } from 'winchi'
+import Wc from 'winchi'
 import WcFormItem from './Item'
 import WcFormList from './List'
 

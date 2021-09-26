@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import type { ImageProps, ButtonProps } from 'antd'
 import { Button, Divider, Space, Image } from 'antd'
 import Wc, { R } from 'winchi'
-import type { Columns, Handles } from '@src/d'
+import type { Columns, Methods } from '@src/d'
 import WcBaseTable, { WcBaseTableProps, BaseActionRef } from '../Base'
 import { useWcConfig } from '@src/hooks'
 import { UseWcConfigRender } from '@src/App'
@@ -17,7 +17,8 @@ export interface TableTypeCombineProps<T extends AO = AO> {
 
 export interface WcTypeTableProps<T extends AO = AO> extends WcBaseTableProps<T> {
   alias?: AO
-  methods?: Handles
+  methods?: Methods
+  useDefaultColumns?: boolean
 }
 export type TypeActionRef = BaseActionRef
 
@@ -28,23 +29,25 @@ const WcTypeTable: Model = ({
   methods: methods_ = Wc.obj,
   alias: alias_ = Wc.obj,
   Render = WcBaseTable,
+  useDefaultColumns = true,
   ...props
 }) => {
   const { wcConfig } = useWcConfig()
   const alias = useMemo(() => ({ ...wcConfig.alias, ...alias_ }), [alias_, wcConfig.alias])
 
   /** handle新增 消息通知  */
-  const methods = useMemo<Handles>(() =>
+  const methods = useMemo<Methods>(() =>
     Wc.messageComposeMethod(actionLoading, wcConfig.handlesMessage, methods_), [methods_])
+
+  const hideInTable = R.filter((c: any) => c.hideTable !== true) as AF
 
   const columns = useMemo(R.compose(
     _pipeColumns(methods, alias),
-    R.filter((c: any) => c.hideTable !== true) as AF,
-    R.map(_forceHideExhibit),
+    hideInTable,
     Wc.uniqueLeft(propDataIndex),
     R.concat(columns_),
-    Wc.identify(wcConfig.columns || Wc.arr),
-  ), [columns_, alias, methods, wcConfig.columns])
+    Wc.identify(useDefaultColumns && wcConfig.columns ? wcConfig.columns : Wc.arr),
+  ), [columns_, useDefaultColumns, alias, methods, wcConfig.columns])
 
   return (
     <Render
@@ -144,18 +147,6 @@ const _processTypeMap: Record<TableType, AF<[ProcessTypeParamas], Columns>> = {
     }
   }
 }
-
-/** 
- * @description ${dataIndex}@开头，除了table隐藏显示
- */
-const _forceHideExhibit = (c: Columns): Columns => `${propDataIndex(c)}`.startsWith('@')
-  ? {
-    ...c,
-    hideForm: true,
-    hideDetail: true,
-    hideTable: c.tableType === 'handles' && Wc.isEmptyObj(c.handles || Wc.obj) ? true : c.hideTable,
-  }
-  : c
 
 /**
  * @description fetchRenderValue处理

@@ -1,8 +1,11 @@
+import type { AxiosPromise } from 'axios'
+import type { OptionProps } from 'antd/lib/select'
 import type { ColumnProps } from 'antd/lib/table'
 import type { FormItemProps, FormListProps } from 'antd/lib/form'
 import type { TableHandleKeys } from '@src/index'
 import type { FormProps, FormType } from '@src/Form'
 import type { TableType, TableTypeCombineProps } from '@src/Table'
+
 import type { WcUploadProps } from './Upload'
 
 export type Size = Exclude<SizeType, void>
@@ -11,15 +14,17 @@ export interface LayoutSize {
   width?: string | number
 }
 
-export interface ColumnFormItemProps extends Omit<FormItemProps, 'label' | 'name'>, LayoutSize {
-
+export interface ColumnFormItemProps extends Omit<FormItemProps, 'label' | 'name' | 'initialValue'>, LayoutSize {
+  width?: string | number
 }
 
-export interface ColumnFormListProps extends Omit<FormListProps, 'label' | 'name'>, LayoutSize {
+export interface ColumnFormListProps extends Omit<FormListProps, 'label' | 'name' | 'initialValue' | 'children'>, LayoutSize {
   columns: Columns[]
 }
 
-export type Handles<T extends AO = AO> = Partial<Record<TableHandleKeys & string, (row: T | T[], ...rest: any[]) => any>>
+export type Methods<T extends AO = AO> = Partial<Record<TableHandleKeys | string, (row: T | T[], ...rest: any[]) => any>>
+
+export type ColumnsEnum = Record<string | number, React.ReactNode> | OptionProps[]
 
 export interface Columns<T extends AO = AO> extends ColumnProps<T> {
   /** 
@@ -34,7 +39,7 @@ export interface Columns<T extends AO = AO> extends ColumnProps<T> {
    * @用作展示：优先级高于alias
    * @用作表单：优先级低于formProps.options
     */
-  enum?: Record<string | number, React.ReactNode>
+  enum?: ColumnsEnum | AF<any[], Promise<ColumnsEnum>> | AxiosPromise<ColumnsEnum>
   /** 
    * @description column.render的返回值
     */
@@ -44,6 +49,7 @@ export interface Columns<T extends AO = AO> extends ColumnProps<T> {
    * @type [compose的顺序，从后到前] 
    */
   formType?: FormType | FormType[]
+  initialValue?: any
   /**
    * @description <Form.FormItem {...props} /> 
    *  
@@ -76,7 +82,7 @@ export type TableHandleKeys = 'onRemoves'
 export interface WcConfig {
   size?: Size
   dataKey: GetKey
-  totalPageKey: GetKey
+  totalKey: GetKey
   pageSize: number
   requestPageKey: string
   requestPageSizeKey: string

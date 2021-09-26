@@ -14,7 +14,7 @@ type Model = React.FC<WcResolveChidrenProps>
 const ResolveChidren: Model = ({ formProps: formProps_ = Wc.obj, ...props }: any) => {
   const formProps = formProps_.options ? formProps_ : {
     ...formProps_,
-    options: _objToLabel(props.enum)
+    options: props.enum && (Array.isArray(props.enum) ? props.enum : _objToLabel(props.enum)),
   }
 
   return props.formType === 'list'
@@ -24,6 +24,5 @@ const ResolveChidren: Model = ({ formProps: formProps_ = Wc.obj, ...props }: any
 
 export default React.memo<Model>(ResolveChidren)
 
-
 const _objToLabel = (o: AO): { label: string, value: any }[] =>
-  Object.entries(o).map(([label, value]) => ({ label, value }))
+  Object.entries(o).map(([value, label]) => ({ label, value }))

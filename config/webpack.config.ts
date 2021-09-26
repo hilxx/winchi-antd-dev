@@ -82,7 +82,7 @@ export default async (): Promise<WebpackConfig> => {
        options: {
         import: true,
         modules: {
-         localIdentName: "[path]-[local]-[hash:base64:5]",
+         localIdentName: "[path][local]",
         },
        },
       },

@@ -24,7 +24,7 @@ let defaultAlias: Alias = {
 
 let defaultConfig: WcConfig = {
  dataKey: 'data',
- totalPageKey: 'totalPage',
+ totalKey: 'total',
  requestPageKey: 'page',
  requestPageSizeKey: 'pageSize',
  defaultPage: 0,

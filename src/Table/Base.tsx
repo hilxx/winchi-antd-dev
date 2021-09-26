@@ -16,11 +16,12 @@ export interface WcBaseTableProps<T extends AO = AO> extends Omit<TableProps<T>,
   request?(params?: any[]): Promise<AO>
   composeRequest?(params?: AO, fn?: AF): Promise<any>
   pageSize?: number
+  defaultPage?: number
   actionRef?: React.RefObject<BaseActionRef | undefined>
   /** 
    * @default checkbox
    * @false 关闭选择
-    */
+    */k
   rowSelection?: TableRowSelection<T> | false
   onLoading?(boolean): any
   onSelectRowChange?(keys: Key[], rows: T[]): any
@@ -35,6 +36,7 @@ const WcBaseTable: Model = ({
   request: request_ = Wc.func,
   composeRequest: composeRequest_,
   pageSize: pageSize_,
+  defaultPage: defaultPage_,
   pagination: pagination_ = Wc.obj,
   rowSelection: rowSelection_ = Wc.obj,
   actionRef,
@@ -48,17 +50,19 @@ const WcBaseTable: Model = ({
   const { wcConfig, wcConfigRef } = useWcConfig()
   const [spinning, setSpinning] = useState(true)
   const [data, setData] = useState<AO[]>([])
-  const [currentPage, setCurrentPage] = useState(wcConfig.defaultPage || 0)
+  const [currentPage, setCurrentPage] = useState(0)
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const rowKey = useMemo<string>(() => (typeof rowKey_ === 'function' ? rowKey() : rowKey_) ?? 'id', [rowKey_])
-  const totalPageRef = useRef<number>(0)
+  const dataSourceMap = useMemo(() => new Map<number, AO[]>(), [])
+  const totalRef = useRef<number>(0)
   const isRefreshRef = useRef<boolean>(false)
   const requestDebounceRef = useRef<AF>(Wc.debouncePromise(setData))
   const spinTimeOutId = useRef<any>()
   const pageSize = pageSize_ ?? wcConfig.pageSize ?? 40
+  const defaultPage = defaultPage_ ?? wcConfig.defaultPage
 
   useEffect(() => {
-    if (currentPage === wcConfig.defaultPage && totalPageRef.current === 0 && preventFirtstRequest) return
+    if (currentPage === wcConfig.defaultPage && totalRef.current === 0 && preventFirtstRequest) return
     request()
   }, [currentPage])
 
@@ -87,9 +91,9 @@ const WcBaseTable: Model = ({
 
   const effectData: AF = d => {
     const newData = Wc.prop(wcConfigRef.current!.dataKey, d)
-    const totalPage = Wc.prop(wcConfigRef.current!.totalPageKey, d)
+    const totalPage = Wc.prop(wcConfigRef.current!.totalKey, d)
     const isRefresh = isRefreshRef.current
-    totalPageRef.current = totalPage
+    totalRef.current = totalPage
     setData(isRefresh ? newData : [...data, ...newData])
   }
 
@@ -123,7 +127,7 @@ const WcBaseTable: Model = ({
       effectData,
     ),
     composeRequest,
-    mergePageParams({ size: pageSize, page: currentPage }),
+    mergePageParams({ size: pageSize, page: currentPage + defaultPage }),
     R.tap(toggleSpinning(true)),
   ).catch(requestCatch)
 
@@ -131,9 +135,9 @@ const WcBaseTable: Model = ({
     hideOnSinglePage: true,
     pageSize,
     ...pagination_,
-    total: totalPageRef.current,
+    total: totalRef.current,
     onChange(page, pageSize) {
-      setCurrentPage(page)
+      setCurrentPage(page - 1)
       pagination_?.onChange?.(page, pageSize)
     },
   }

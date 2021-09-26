@@ -137,7 +137,7 @@ exports["default"] = (function () { return __awaiter(void 0, void 0, void 0, fun
                                             options: {
                                                 "import": true,
                                                 modules: {
-                                                    localIdentName: "[path]-[local]-[hash:base64:5]"
+                                                    localIdentName: "[path][local]"
                                                 }
                                             }
                                         },

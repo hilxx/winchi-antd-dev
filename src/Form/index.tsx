@@ -56,9 +56,9 @@ const WcForm: Model = ({
  const steps = useMemo(() => steps_?.slice(0, columns.length), [steps_, columns])
 
  const initialValues = useMemo(() => columns.flat().reduce((r, c) =>
-  c.formItemProps?.initialValue ? {
+  c.initialValue ? {
    ...r,
-   [`${c.dataIndex}`]: c.formItemProps.initialValue
+   [`${c.dataIndex}`]: c.initialValue
   } : r, initialValues_), [columns, initialValues_])
 
  const stepMaxNum = columns.length - 1
@@ -155,4 +155,6 @@ const _filterColumns: AF = R.filter((c: Columns) =>
 export default React.memo<Model>(WcForm)
 
 export * from './formType'
+export * from './List'
+export * from './Item'
 

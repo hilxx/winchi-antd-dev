@@ -27,7 +27,7 @@ const WcFormItem: Model = ({
  return (
   <Form.Item
    key={`${dataIndex}`}
-   className={`${styles['form-item']} ${className}`}
+   className={`${styles['form-item']} ${styles.grid} ${className}`}
    {...formItemProps}
    name={`${dataIndex}`}
    label={title}
@@ -40,7 +40,6 @@ const WcFormItem: Model = ({
    <C
     size={wcConfig.size}
     wcInitVal={wcInitVal ?? formItemProps.initialValue}
-    dataIndex={dataIndex}
     {...formProps}
     style={{ width: formProps.width, ...formProps.style || {} }}
    />

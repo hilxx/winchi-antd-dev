@@ -1,7 +1,16 @@
-.form-item {
- width: 48%;
+@import '../index.less';
 
- @media (max-width: 600px) {
+.form-item {
+ .form-ele();
+ min-width: 8rem;
+
+ &.grid {
+  display           : grid;
+  justify-items     : left;
+  grid-template-rows: auto 1fr;
+ }
+
+ >div:last-child {
   width: 100%;
  }
 }

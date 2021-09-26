@@ -1,20 +1,53 @@
 import React, { useEffect, useState } from 'react'
+import * as R from 'ramda'
 import Page from '../Page'
 import { useWcConfig } from '@src/hooks'
 import { Columns } from '@src/d'
-import axios from 'axios'
+import axios, { AxiosRequestConfig } from 'axios'
+
+const request = (config: AxiosRequestConfig) => axios({
+  ...config,
+  baseURL: '/api',
+  headers: {
+    Authorization: 'bearer d12ef5ed-1b62-4e21-888d-05f7d30a832e',
+  },
+})
 
 const bannerColumns: Columns[] = [
   {
     title: '轮播图片',
     dataIndex: 'imageUrl',
     tableType: 'images',
-  },
-  {
-    title: '语言版本',
-    dataIndex: 'languages',
-    render() {
-      return '语言版本'
+    formType: 'table',
+    formItemProps: {
+      width: '100%',
+    },
+    formProps: {
+      rowSelection: { type: 'radio' },
+      request: (params) => request({
+        url: '/material/resource/all?resourceType=PICTURE',
+        params,
+      }).then(d => {
+        return d.data.data
+      }),
+      columns: [
+        {
+          title: '名称',
+          dataIndex: 'name',
+        },
+        {
+          title: '资源',
+          dataIndex: 'urls',
+          tableType: 'images',
+        },
+        {
+          title: '语言',
+          dataIndex: 'languages',
+          render(d) {
+            return d.map(R.prop('name')).join('\n ')
+          },
+        },
+      ],
     },
   },
   {
@@ -25,10 +58,42 @@ const bannerColumns: Columns[] = [
       type: 'alias',
     },
     enum: {
-      Other: '其它',
-      Link: '链接'
+      Link: '链接',
+      Other: '无操作',
     }
-  }
+  },
+  {
+    title: '语言版本',
+    dataIndex: 'carouselMapDetails',
+    formType: 'list',
+    formListProps: {
+      width: '70%',
+      columns: [
+        {
+          dataIndex: 'languages',
+          title: '选择语言',
+          formType: 'select',
+          enum: () => request({
+            url: '/language',
+            params: {
+              page: 0,
+              size: 99,
+            },
+          }).then(d => {
+            return d.data.data.content.reduce((r, d) => ({ ...r, [d.id]: d.name }), {})
+          }),
+        },
+        {
+          title: '标题',
+          dataIndex: 'title',
+        },
+      ]
+    },
+
+    render(_, { languages: d }) {
+      return d.map(R.prop('name')).join('<br />')
+    },
+  },
 ]
 
 const learnColumns: Columns[] = [
@@ -61,17 +126,17 @@ export default () => {
 
   useEffect(() => {
     setWcConfig({
-      totalPageKey: 'totalPages',
+      totalKey: 'totalElements',
       dataKey: 'content',
       requestPageSizeKey: 'size',
       columns: [
         {
-          title: '标题',
-          dataIndex: 'title',
-        },
-        {
           title: '权重',
           dataIndex: 'weight',
+          formType: 'number',
+          formItemProps: {
+            width: '28%',
+          }
         },
         {
           title: '更新时间',
@@ -91,16 +156,13 @@ export default () => {
     })
   }, [])
 
-  const composeRequest = ({ requestUrl, ...params }) => 
-    axios({
+  const composeRequest = ({ requestUrl, ...params }) =>
+    request({
       method: 'GET',
       url: requestUrl,
       params,
-      headers: {
-        Authorization: 'bearer 63e04e33-f102-4bd3-bb72-544d490d689b',
-      }
     }).then(d => d.data.data)
-   
+
   return (
     <>
       <Page
@@ -110,25 +172,25 @@ export default () => {
           onEdit() { return new Promise(resolve => resolve(1)) },
           onAdd(d) {
             console.log(d)
-            return 
+            return
           }
         }}
         composeRequest={composeRequest}
         tabsConfig={{
           onChange(v) {
             setColumns(
-              v === '/api/carousel/map/all'
+              v === '/carousel/map/all'
                 ? bannerColumns
                 : learnColumns
             )
           },
           tabs: [
             {
-              tabKey: '/api/carousel/map/all',
+              tabKey: '/carousel/map/all',
               tab: '轮播图',
             },
             {
-              tabKey: '/api/plant/contents',
+              tabKey: '/plant/contents',
               tab: '了解植物研发中心',
             },
           ],

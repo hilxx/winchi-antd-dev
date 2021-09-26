@@ -60,7 +60,7 @@ const WcHeadTable: Model = ({
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [currentTabKey, setCurrentTabKey] = useState(tabsConfig?.defaultTab ?? tabsConfig?.tabs?.[0]?.tabKey)
   const actionRef = useRef<HeadActionRef>()
-  const selectedRowsRef = useRef<any[]>()
+  const selectedRowsRef = useRef<any[]>() 
 
   useEffect(() => {
     preventFirtstRequest || effectTabChange(currentTabKey)
@@ -112,7 +112,7 @@ const WcHeadTable: Model = ({
       tabsConfig?.onChange?.(key)
       setCurrentTabKey(key)
     }
-    tabsConfig?.requestKey && actionRef.current?.reload({ [tabsConfig.requestKey]: currentTabKey })
+    tabsConfig?.requestKey && actionRef.current?.reload({ [tabsConfig.requestKey]: key })
   }
 
   const tabChangeHandle = R.unless(
@@ -258,7 +258,7 @@ const WcHeadTable: Model = ({
           onLoading={loadingHandle}
           onSelectRowChange={selectRowChangeHandle}
           pagination={{ ...pagination, size: wcConfig.size === 'large' ? 'default' : 'small' }}
-          preventFirtstRequest
+          preventFirtstRequest={!!tabsConfig?.tabs?.length}
           {...props}
         />
       </main>

@@ -6,7 +6,7 @@ import type { Columns, Methods } from '@src/d'
 import WcBaseTable, { WcBaseTableProps, BaseActionRef } from '../Base'
 import { useWcConfig } from '@src/hooks'
 import { UseWcConfigRender } from '@src/App'
-import { actionLoading, propDataIndex } from '@src/utils'
+import { propDataIndex } from '@src/utils'
 import styles from './index.less'
 
 export type TableType = 'alias' | 'images' | 'handles'
@@ -26,7 +26,7 @@ type Model = React.FC<WcTypeTableProps>
 
 const WcTypeTable: Model = ({
   columns: columns_,
-  methods: methods_ = Wc.obj,
+  methods = Wc.obj,
   alias: alias_ = Wc.obj,
   Render = WcBaseTable,
   useDefaultColumns = true,
@@ -34,10 +34,6 @@ const WcTypeTable: Model = ({
 }) => {
   const { wcConfig } = useWcConfig()
   const alias = useMemo(() => ({ ...wcConfig.alias, ...alias_ }), [alias_, wcConfig.alias])
-
-  /** handle新增 消息通知  */
-  const methods = useMemo<Methods>(() =>
-    Wc.messageComposeMethod(actionLoading, wcConfig.handlesMessage, methods_), [methods_])
 
   const hideInTable = R.filter((c: any) => c.hideTable !== true) as AF
 

@@ -117,7 +117,7 @@ export default async (): Promise<WebpackConfig> => {
    extensions: ['.js', '.ts', '.tsx'],
    alias: {
     '@src': path.resolve(__dirname, '../src'),
-    'winchi': path.resolve(__dirname, '../src/lib/index.js')
+    'winchi': path.resolve(__dirname, '../src/src/index.ts')
    },
   },
  }

@@ -57,13 +57,15 @@ const FormList: Model = ({
      {(fields, { add, remove }) => (
       <>
        {fields.map(filed => (
-        <Space key={filed.key} className={styles.space}>
+        <Space key={filed.key} className={styles.space} align='center'>
          {
           columns?.map(c => (
            <ResolveChidren
             hide={false}
             key={`${c.dataIndex}`}
-            {...c}
+            {
+             ...{...c, dataIndex: [filed.name, c.dataIndex]}
+            }
             formItemProps={{ width: '100%', ...c.formItemProps || {}, ...filed, }}
             wcInitVal={wcInitVal}
            />

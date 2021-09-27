@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { Modal } from 'antd'
 import Wc, { R } from 'winchi'
-import { propDataIndex, processEnum } from '@src/utils'
+import { propDataIndex, processEnum, actionLoading } from '@src/utils'
 import { Methods, Columns } from '@src/d'
 import { useWcConfig } from '@src/hooks'
 import WcTable, { WcTableProps } from '../Table'
@@ -33,8 +33,16 @@ const WcPage: Model = ({
   setModalVisible(true)
  })
 
+ const methods = useMemo<Methods>(() => ({
+  onClickEdit: methods_.onEdit && ((v) => {
+   setModalVisible(true)
+   setValues(v)
+  }),
+  ...Wc.messageComposeMethod(actionLoading, wcConfig.handlesMessage, methods_),
+ }), [methods_])
+
  const submitHandle = async (vs) => {
-  await (values ? methods_.onEdit?.(vs, values) : methods_.onAdd(values))
+  await (values ? methods.onEdit?.(vs, values) : methods.onAdd?.(vs))
   setModalVisible(false)
   setValues(undefined)
  }
@@ -48,15 +56,6 @@ const WcPage: Model = ({
   )
  )
 
- const methods = useMemo<Methods>(() => ({
-  onClickEdit: methods_.onEdit && ((v) => {
-   setModalVisible(true)
-   setValues(v)
-  }),
-  ...methods_,
- }), [methods_])
-
-
  useEffect(R.compose(
   Wc.sep(
    arr => arr.forEach(queryColumnEnum),
@@ -65,7 +64,7 @@ const WcPage: Model = ({
   R.map(_forceHideExhibit),
   Wc.uniqueLeft(propDataIndex),
   R.concat(columns_),
-  Wc.identify(wcConfig.columns || Wc.arr),
+  Wc.identify(wcConfig.columns),
  ), [columns_, methods, wcConfig.columns])
 
  return (
@@ -103,7 +102,6 @@ const _forceHideExhibit = (c: Columns): Columns => `${propDataIndex(c)}`.startsW
  ? {
   ...c,
   hideForm: true,
-  hideDetail: true,
   hideTable: c.tableType === 'handles' && Wc.isEmptyObj(c.handles || Wc.obj) ? true : c.hideTable,
  }
  : c

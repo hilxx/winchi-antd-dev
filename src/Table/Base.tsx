@@ -9,6 +9,7 @@ import Wc, { R } from 'winchi'
 export interface BaseActionRef {
   reload(o?: AO): Promise<any>
   resetSelectedRows(keys?: (AO | string | number)[]): any
+  resetHistroy(): any
 }
 
 export interface WcBaseTableProps<T extends AO = AO> extends Omit<TableProps<T>, 'columns' | 'rowSelection'> {
@@ -21,7 +22,7 @@ export interface WcBaseTableProps<T extends AO = AO> extends Omit<TableProps<T>,
   /** 
    * @default checkbox
    * @false 关闭选择
-    */k
+    */
   rowSelection?: TableRowSelection<T> | false
   onLoading?(boolean): any
   onSelectRowChange?(keys: Key[], rows: T[]): any
@@ -63,7 +64,7 @@ const WcBaseTable: Model = ({
 
   useEffect(() => {
     if (currentPage === wcConfig.defaultPage && totalRef.current === 0 && preventFirtstRequest) return
-    request()
+    dataSourceMap.has(currentPage) ? setData(dataSourceMap.get(currentPage)!) : request()
   }, [currentPage])
 
   const toggleSpinning = (b: boolean) => () => {
@@ -84,7 +85,7 @@ const WcBaseTable: Model = ({
     rowSelection_ !== false && rowSelection_?.onChange?.(ks, rows)
   }
 
-  const resetState = () => {
+  const requestEndResetState = () => {
     isRefreshRef.current && effectSelectedRowKeys(Wc.arr)
     isRefreshRef.current = false
   }
@@ -92,9 +93,9 @@ const WcBaseTable: Model = ({
   const effectData: AF = d => {
     const newData = Wc.prop(wcConfigRef.current!.dataKey, d)
     const totalPage = Wc.prop(wcConfigRef.current!.totalKey, d)
-    const isRefresh = isRefreshRef.current
+    dataSourceMap.set(currentPage, newData)
     totalRef.current = totalPage
-    setData(isRefresh ? newData : [...data, ...newData])
+    setData(newData)
   }
 
   /**
@@ -121,7 +122,7 @@ const WcBaseTable: Model = ({
 
   const request = Wc.asyncCompose(
     toggleSpinning(false),
-    resetState,
+    requestEndResetState,
     R.when(
       Wc.isObj,
       effectData,
@@ -151,8 +152,12 @@ const WcBaseTable: Model = ({
   if (actionRef) {
     (actionRef as { current: BaseActionRef }).current = {
       reload(params = {}) {
+        dataSourceMap.clear()
         isRefreshRef.current = true
         return request(mergePageParams({ page: wcConfig.defaultPage, size: pageSize })(params))
+      },
+      resetHistroy() {
+        dataSourceMap.clear()
       },
       resetSelectedRows: effectSelectedRowKeys,
     }

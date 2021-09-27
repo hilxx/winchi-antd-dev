@@ -1,6 +1,6 @@
-import React, { createContext, useEffect, useMemo, useRef, useState } from 'react'
+import React, { createContext, useMemo, useRef, useState } from 'react'
 import type { FormInstance } from 'antd'
-import { Form, Button, Steps, Divider } from 'antd'
+import { Form, Button, Steps, Divider, message } from 'antd'
 import { LoadingOutlined } from '@ant-design/icons'
 import Wc, { R } from 'winchi'
 import { Columns } from '@src/d'
@@ -43,23 +43,22 @@ const WcForm: Model = ({
  const [currentStep, setCurrentStep] = useState(0)
  const formRef = useRef<FormInstance>(null)
 
- useEffect(() => {
-  setCurrentStep(0)
- }, [initialValues_])
-
  const columns = useMemo<Columns[][]>(
   R.compose(
    R.filter(Wc.propLength) as AF,
    R.map(_filterColumns),
    Wc.identify(columns_[0] && !Array.isArray(columns_[0]) ? [columns_] : columns_),
   ), [columns_])
- const steps = useMemo(() => steps_?.slice(0, columns.length), [steps_, columns])
 
- const initialValues = useMemo(() => columns.flat().reduce((r, c) =>
-  c.initialValue ? {
-   ...r,
-   [`${c.dataIndex}`]: c.initialValue
-  } : r, initialValues_), [columns, initialValues_])
+ const initialValues = useMemo(() =>
+  columns.flat().reduce((r, c) =>
+   c.initialValue ? {
+    ...r,
+    [`${c.dataIndex}`]: c.initialValue
+   } : r, initialValues_)
+  , [columns, initialValues_])
+
+ const steps = useMemo(() => steps_?.slice(0, columns.length), [steps_, columns])
 
  const stepMaxNum = columns.length - 1
 
@@ -74,8 +73,10 @@ const WcForm: Model = ({
    await checkValidata()
    const vs = formRef.current?.getFieldsValue()
    await onSubmit?.(vs, initialValues)
+   formRef.current?.resetFields()
    setCurrentStep(0)
   } catch (err) {
+   message.error('')
    console.error(`form submiting`, err)
   }
   setLoading(false)
@@ -146,7 +147,6 @@ const WcForm: Model = ({
   </WcFormContext.Provider>
  )
 }
-
 
 const _filterColumns: AF = R.filter((c: Columns) =>
  !c.hideForm && c.dataIndex != undefined && propFormTypeFC(c.formType)

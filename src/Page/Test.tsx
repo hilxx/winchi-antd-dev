@@ -9,7 +9,7 @@ const request = (config: AxiosRequestConfig) => axios({
   ...config,
   baseURL: '/api',
   headers: {
-    Authorization: 'bearer d12ef5ed-1b62-4e21-888d-05f7d30a832e',
+    Authorization: 'bearer 1e9d2bc4-580e-4bce-856f-5d7513dabaf1',
   },
 })
 
@@ -139,15 +139,6 @@ export default () => {
           }
         },
         {
-          title: '更新时间',
-          dataIndex: 'updateTime',
-          hideForm: true,
-          render(d) {
-            const date = new Date(d)
-            return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`
-          }
-        },
-        {
           dataIndex: '@handle',
           title: '操作',
           tableType: 'handles',
@@ -169,10 +160,14 @@ export default () => {
         columns={columns}
         methods={{
           onRemove() { return new Promise(resolve => setTimeout(resolve, 3000)) },
-          onEdit() { return new Promise(resolve => resolve(1)) },
           onAdd(d) {
             console.log(d)
-            return
+            return new Promise(r => setTimeout(r, 4000))
+          },
+          onEdit(d, row) {
+            console.log(d, row)
+            return new Promise(r => setTimeout(r, 4000))
+
           }
         }}
         composeRequest={composeRequest}

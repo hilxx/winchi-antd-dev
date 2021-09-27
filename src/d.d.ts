@@ -2,6 +2,7 @@ import type { AxiosPromise } from 'axios'
 import type { OptionProps } from 'antd/lib/select'
 import type { ColumnProps } from 'antd/lib/table'
 import type { FormItemProps, FormListProps } from 'antd/lib/form'
+
 import type { TableHandleKeys } from '@src/index'
 import type { FormProps, FormType } from '@src/Form'
 import type { TableType, TableTypeCombineProps } from '@src/Table'
@@ -57,10 +58,14 @@ export interface Columns<T extends AO = AO> extends ColumnProps<T> {
   formItemProps?: ColumnFormItemProps
   formListProps?: ColumnFormListProps
   /** <Form.FormItem><FormComponent {...props}  /></Form.FormItem>  */
-  formProps?: FormProps & { width?: number | string }
+  formProps?: FormProps & LayoutSize
   hideForm?: boolean
   hideTable?: boolean
   hideDetail?: boolean
+  /**
+   * @description x轴顺序
+    */
+  xIndex?: number
 }
 
 export type AliasKey = Size
@@ -80,7 +85,14 @@ export type TableHandleKeys = 'onRemoves'
   | 'onAdd'
 
 export interface WcConfig {
+  /**
+   * @description 当前table 设置紧凑程度
+    */
   size?: Size
+  /** 
+   * @description 请求超时时间(ms)
+    */
+  timeout: number
   dataKey: GetKey
   totalKey: GetKey
   pageSize: number

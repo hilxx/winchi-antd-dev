@@ -29,7 +29,7 @@ const WcFormItem: Model = ({
    key={`${dataIndex}`}
    className={`${styles['form-item']} ${styles.grid} ${className}`}
    {...formItemProps}
-   name={`${dataIndex}`}
+   name={dataIndex as any}
    label={title}
    style={{
     width,

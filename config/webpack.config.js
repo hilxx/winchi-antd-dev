@@ -170,7 +170,7 @@ exports["default"] = (function () { return __awaiter(void 0, void 0, void 0, fun
                             extensions: ['.js', '.ts', '.tsx'],
                             alias: {
                                 '@src': path_1["default"].resolve(__dirname, '../src'),
-                                'winchi': path_1["default"].resolve(__dirname, '../src/lib/index.js')
+                                'winchi': path_1["default"].resolve(__dirname, '../src/src/index.ts')
                             }
                         } })];
         }

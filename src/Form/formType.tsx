@@ -34,7 +34,7 @@ const mapFC = {
     return <FormComponentWrap {...props} onChangeComputeValue={propEventValue} Component={Radio.Group} />
   },
   select(props: any) {
-    return <FormComponentWrap {...props} loading={typeof props.options === 'function'}  Component={Select} />
+    return <FormComponentWrap {...props} loading={typeof props.options === 'function'} Component={Select} />
   },
   table(props: any) {
     const { setLoading } = useContext(WcFormContext)
@@ -63,7 +63,14 @@ export const propEventValue = (e?) => e?.target?.value
 
 export const propFormTypeFC: AF = (key: FormType = 'text') => mapFC[key]
 
-const FormComponentWrap: React.FC<{ onChange: AF, wcInitVal: any, onChangeComputeValue?: AF, Component: React.ComponentType<AO> }> = ({
+export interface FormComponentWrapProps {
+  onChange: AF
+  wcInitVal: any
+  Component: React.ComponentType<AO>
+  onChangeComputeValue?: AF
+}
+
+const FormComponentWrap: React.FC<FormComponentWrapProps> = ({
   wcInitVal,
   onChange = Wc.func,
   Component,
@@ -73,8 +80,9 @@ const FormComponentWrap: React.FC<{ onChange: AF, wcInitVal: any, onChangeComput
   const [value, setValue] = useState<any>()
 
   useEffect(() => {
-    wcInitVal != undefined && value !== wcInitVal && setValue(wcInitVal)
+    value !== wcInitVal && setValue(wcInitVal)
   }, [wcInitVal])
+
 
   const changeHandle = (...rest) => {
     const newV = onChangeComputeValue?.(...rest) ?? rest[0]

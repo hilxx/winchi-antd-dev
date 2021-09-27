@@ -23,6 +23,7 @@ let defaultAlias: Alias = {
 }
 
 let defaultConfig: WcConfig = {
+ timeout: 7000,
  dataKey: 'data',
  totalKey: 'total',
  requestPageKey: 'page',
@@ -35,8 +36,19 @@ let defaultConfig: WcConfig = {
  alias: defaultAlias,
  columns: [
   {
+   title: '更新时间',
+   dataIndex: 'updateTime',
+   hideForm: true,
+   render(d) {
+    const date = new Date(d)
+    return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`
+   }
+  },
+  {
    title: '从出生那年就飘着',
    dataIndex: '@handle',
+   fixed: 'right',
+   // width: 100,
    handles: {
     onRemove: <Button type='link' style={{ padding: 0 }} danger>{defaultAlias.remove}</Button>,
     onClickEdit: defaultAlias.edit,
@@ -78,7 +90,6 @@ let defaultConfig: WcConfig = {
  upload: Wc.obj,
 }
 
-
 const _effectDefaultAlias = R.curry(
  (old: WcConfig, cur) => {
   defaultAlias = { ...old.alias, ...cur.alias || Wc.obj }
@@ -88,9 +99,16 @@ const _effectDefaultAlias = R.curry(
 
 const _effectDefaultConfig = newConfig => defaultConfig = newConfig
 
+const _uniqLeftColumns = (conf: WcConfig) => ({
+ ...conf,
+ columns: Wc.mergeArrayLeft(R.prop('dataIndex'), conf.columns),
+})
+
 const _setWcConfigHandle: AF = (oldConfig, handle: AF) => R.compose(
  handle,
- Wc.mergeDeepLeft(R.__, oldConfig),
+ R.tap(console.log),
+ _uniqLeftColumns,
+ Wc.mergeDeepRight(oldConfig),
  _effectDefaultAlias(oldConfig),
 )
 

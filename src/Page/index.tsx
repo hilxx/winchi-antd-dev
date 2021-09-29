@@ -5,12 +5,14 @@ import { propDataIndex, processEnum, actionLoading } from '@src/utils'
 import { Methods, Columns } from '@src/d'
 import { useWcConfig } from '@src/hooks'
 import WcTable, { WcTableProps } from '../Table'
-import WcForm, { WcFormProps } from '../Form'
+import WcForm, { WcFormProps, FormRef } from '../Form'
 
 export interface WcPageProps<T extends AO = AO> extends Omit<WcTableProps<T>, 'columns'> {
  columns: WcFormProps<T>['columns']
  formProps?: Omit<WcFormProps<T>, 'columns'>
  modalWidth?: string | number
+ eidtValueTransform?(d: T): any
+ formRef?: React.RefObject<FormRef | undefined>
 }
 
 type Model = React.FC<WcPageProps>
@@ -20,12 +22,15 @@ const WcPage: Model = ({
  formProps = Wc.obj,
  modalWidth: modalWidth_,
  methods: methods_ = Wc.obj,
+ eidtValueTransform,
+ formRef,
  ...props
 }) => {
  const { wcConfig } = useWcConfig()
  const [modelVisible, setModalVisible] = useState(false)
  const [columns, setColumns] = useState<Columns[]>([])
  const [values, setValues] = useState<AO>()
+
  const flatColumns = useMemo(() => columns.flat(), [columns])
  const modalWidth = modalWidth_ ?? useWcConfig().wcConfig.ModalWidth
 
@@ -34,9 +39,10 @@ const WcPage: Model = ({
  })
 
  const methods = useMemo<Methods>(() => ({
-  onClickEdit: methods_.onEdit && ((v) => {
+  onClickEdit: methods_.onEdit && (async v => {
    setModalVisible(true)
-   setValues(v)
+   const editVal = await (eidtValueTransform ? eidtValueTransform(v) : v)
+   setValues(editVal)
   }),
   ...Wc.messageComposeMethod(actionLoading, wcConfig.handlesMessage, methods_),
  }), [methods_])
@@ -83,6 +89,7 @@ const WcPage: Model = ({
     width={modalWidth}
    >
     <WcForm
+     formRef={formRef}
      initialValues={values}
      columns={columns}
      onSubmit={submitHandle}

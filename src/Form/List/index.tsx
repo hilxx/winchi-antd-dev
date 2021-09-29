@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useContext, useEffect, useMemo, useState } from 'react'
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Form, Space } from 'antd'
-import Wc from 'winchi'
+import Wc, { R } from 'winchi'
 import { useWcConfig } from '@src/hooks'
 import type { Columns, ColumnFormListProps } from '@src/d'
 import ResolveChidren, { WcResolveChidrenProps } from '../ResolveChidren'
+import { filterFormColumns, WcFormContext } from '../'
 import { processEnum } from '@src/utils'
 import styles from './index.less'
 
@@ -24,6 +25,8 @@ const FormList: Model = ({
  title,
 }) => {
  const { wcConfig } = useWcConfig()
+ const { onValueChange } = useContext(WcFormContext)
+ const [formValues, setFormValues] = useState(Wc.obj)
  const { columns_, width, ...formListProps } = useMemo(() => {
   const { columns, width, ...formListProps } = formListProps_ as ColumnFormListProps
   return {
@@ -32,6 +35,7 @@ const FormList: Model = ({
    formListProps,
   }
  }, [formListProps_])
+
  const [columns, setColumns] = useState<Columns[]>(columns_)
 
  const queryColumnEnum = processEnum((c, index) => {
@@ -42,7 +46,12 @@ const FormList: Model = ({
   ])
  })
 
- useEffect(() => columns_.forEach(queryColumnEnum), [columns_])
+ useEffect(R.compose(
+  () => onValueChange(dataIndex, setFormValues),
+  R.addIndex(R.forEach)(queryColumnEnum),
+  filterFormColumns,
+  Wc.identify(columns_),
+ ), [columns_, dataIndex])
 
  return (
   <div className={`${styles.list} ${className}`} style={{ width }}>
@@ -53,21 +62,22 @@ const FormList: Model = ({
     <Form.List
      name={`${dataIndex}`}
      {...formListProps}
+     initialValue={wcInitVal}
     >
      {(fields, { add, remove }) => (
       <>
-       {fields.map(filed => (
+       {fields.map((filed, index) => (
         <Space key={filed.key} className={styles.space} align='center'>
          {
           columns?.map(c => (
            <ResolveChidren
-            hide={false}
+            hide={typeof c.hideForm === 'function' ? c.hideForm(formValues, index) : c.hideForm}
             key={`${c.dataIndex}`}
             {
-             ...{...c, dataIndex: [filed.name, c.dataIndex]}
+            ...{ ...c, dataIndex: [filed.name, c.dataIndex] }
             }
             formItemProps={{ width: '100%', ...c.formItemProps || {}, ...filed, }}
-            wcInitVal={wcInitVal}
+            wcInitVal={wcInitVal?.[index]?.[c.dataIndex as any]}
            />
           ))
          }
@@ -80,7 +90,8 @@ const FormList: Model = ({
         </Button>
        </Form.Item>
       </>
-     )}
+     )
+     }
     </Form.List>
    </main>
   </div>

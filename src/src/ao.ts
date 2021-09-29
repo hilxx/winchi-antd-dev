@@ -1,5 +1,5 @@
 import * as R from 'ramda'
-import { AO, AF, GetKey, ReturnParameters } from './index';
+import { AO, AF, GetKey } from './index';
 import { isObj } from './isWhat'
 
 export const prop = R.curry(

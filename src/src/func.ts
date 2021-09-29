@@ -4,6 +4,7 @@ import { AF, AO, ReturnParameters } from "./index"
 export interface AsyncComposeReturn<D = any> {
   (data?: any): Promise<D>
   catch(cb: AF): AsyncComposeReturn<D>
+  finally(cb: AF): AsyncComposeReturn<D>
 }
 
 const LOCKET = Symbol('locking')
@@ -31,12 +32,16 @@ export const curryLazy = R.compose(
 )
 
 export const asyncCompose = <D = any>(...fns: AF[]): AsyncComposeReturn<D> => {
+  /** 自底向上 */
   const errCallbacks: AF[] = []
+  /** 自顶向下 */
+  const thenCallbacks: AF[] = [...fns]
+
   const f: AsyncComposeReturn = async (data?) => {
     try {
       let result = data
-      for (let k = fns.length - 1; k >= 0; k--) {
-        result = await fns[k](result)
+      for (let k = thenCallbacks.length - 1; k >= 0; k--) {
+        result = await thenCallbacks[k](result)
       }
       return result
     } catch (e) {
@@ -50,6 +55,13 @@ export const asyncCompose = <D = any>(...fns: AF[]): AsyncComposeReturn<D> => {
     errCallbacks.push(cb)
     return f
   }
+
+  f.finally = cb => {
+    errCallbacks.push(cb)
+    thenCallbacks.splice(0, 0, cb)
+    return f
+  }
+
   return f
 }
 
@@ -82,6 +94,17 @@ export const messageComposeMethod = R.curry(
     )
 )
 
+export const debounce = R.curry((gap: number, f: AF) => {
+  let old = Number.MIN_SAFE_INTEGER
+  return (...params) => {
+    const now = Date.now()
+    if (now - gap >= old) {
+      old = now
+      return f(...params)
+    }
+  }
+})
+
 export const debouncePromise = (rejectValue?) => {
   const queue: AF[] = []
 
@@ -98,3 +121,5 @@ export const debouncePromise = (rejectValue?) => {
     ])
   }
 }
+
+

@@ -41,7 +41,7 @@ type Model = React.FC<WcHeadTableProps>
 const WcHeadTable: Model = ({
   onClickAdd,
   onLoading,
-  actionRef: actionRef_,
+  actionRef: actionRef_ = {},
   onSelectRowChange: onSelectRowChange_,
   hideControl,
   filter,
@@ -60,23 +60,30 @@ const WcHeadTable: Model = ({
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [currentTabKey, setCurrentTabKey] = useState(tabsConfig?.defaultTab ?? tabsConfig?.tabs?.[0]?.tabKey)
   const actionRef = useRef<HeadActionRef>()
-  const selectedRowsRef = useRef<any[]>() 
+  const selectedRowsRef = useRef<any[]>()
+
+  useEffect(() => {
+    if (actionRef.current) {
+      const reload = actionRef.current.reload
+      const actionRefArr = Array.isArray(actionRef_) ? actionRef_ : [actionRef_]
+
+      actionRef.current.reload = tabsConfig?.requestKey
+        ? (params = Wc.obj) => {
+          return reload({
+            [tabsConfig.requestKey!]: currentTabKey,
+            ...params
+          })
+        } : reload
+
+      actionRefArr.forEach(actRef => {
+        (actRef as any).current = actionRef.current
+      })
+    }
+  })
 
   useEffect(() => {
     preventFirtstRequest || effectTabChange(currentTabKey)
   }, [])
-
-  if (actionRef.current) {
-    const reload = actionRef.current.reload
-    actionRef.current.reload = tabsConfig?.requestKey
-      ? (params = Wc.obj) => {
-        return reload({
-          [tabsConfig.requestKey!]: currentTabKey,
-          ...params
-        })
-      } : reload
-    actionRef_ && ((actionRef_ as any).current = actionRef.current)
-  }
 
   const { onRemoves, methods } = useMemo(() => {
     const { onRemoves, ...methods } = methods_
@@ -111,6 +118,7 @@ const WcHeadTable: Model = ({
     if (key !== currentTabKey) {
       tabsConfig?.onChange?.(key)
       setCurrentTabKey(key)
+      actionRef.current?.clearHistroy()
     }
     tabsConfig?.requestKey && actionRef.current?.reload({ [tabsConfig.requestKey]: key })
   }

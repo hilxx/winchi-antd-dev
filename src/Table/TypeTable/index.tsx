@@ -9,9 +9,15 @@ import { UseWcConfigRender } from '@src/App'
 import { propDataIndex } from '@src/utils'
 import styles from './index.less'
 
-export type TableType = 'alias' | 'images' | 'handles'
+/**
+ * @type {txt} 支持换行
+  */
+export type TableType = 'alias' | 'images' | 'handles' | 'txt'
 export interface TableTypeCombineProps<T extends AO = AO> {
   type: TableType
+  /** 
+   * @description 拿到类型的 外部属性
+    */
   getProps?(d: T): { wrapClassName?: string } & (ImageProps | ButtonProps | React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>)
 }
 
@@ -61,6 +67,21 @@ interface ProcessTypeParamas {
 }
 
 const _processTypeMap: Record<TableType, AF<[ProcessTypeParamas], Columns>> = {
+  txt({ column: c, getProps }) {
+    return {
+      ...c,
+      render(d, record, index) {
+        const { wrapClassName = '', className = '', ...props } = getProps?.(record) || Wc.obj
+        return (
+          <span
+            className={`${className.txt} ${wrapClassName} ${className}`}
+            {...props}
+            dangerouslySetInnerHTML={{__html: c.render ? c.render(d, record, index) : d}}
+          />
+        )
+      },
+    }
+  },
   handles({ column: c, methods, getProps }) {
     return {
       ...c,
@@ -116,7 +137,7 @@ const _processTypeMap: Record<TableType, AF<[ProcessTypeParamas], Columns>> = {
       render(d, record, index) {
         const { wrapClassName = '', className = '', ...props } = getProps?.(record) || Wc.obj
         const v = c.enum?.[d] ?? alias[d] ?? d
-        return <main className={`${wrapClassName} ${className}`} {...props}>
+        return <main className={`${wrapClassName} ${className}`} {...props} >
           {c.render ? c.render(v, record, index) : v}
         </main>
       },
@@ -130,7 +151,7 @@ const _processTypeMap: Record<TableType, AF<[ProcessTypeParamas], Columns>> = {
 
         const arr = Array.isArray(images) ? images : [images]
         const node = (
-          <main className={`${styles.imgs} ${wrapClassName}`} >
+          <main className={`${styles.images} ${wrapClassName}`} >
             {
               arr.map((url, index) => (
                 <Image width={100} key={`${url}${index}`} src={url} {...props} />

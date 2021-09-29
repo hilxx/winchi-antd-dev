@@ -54,7 +54,7 @@ export const mergeArrayWith = R.curry(
       map.set(key, map.has(key) ? choose(map.get(key), cur) : cur)
       return map
     }, new Map())
-    
+
 
     return Array.from(arrMap.values())
   }
@@ -66,3 +66,21 @@ const _mergeRightHelper = R.flip(_mergeLeftHelper)
 export const mergeArrayLeft = mergeArrayWith(_mergeLeftHelper)
 
 export const mergeArrayRight = mergeArrayWith(_mergeRightHelper)
+
+
+export const sortByProp: AF = R.curry(
+  (prop_: Key, arr: any[]) => {
+    const prop = typeof prop_ === 'function' ? prop_ : v => v?.[prop_]
+    const newArr = [...arr]
+
+    return newArr.sort((a, b) => prop(a) - prop(b))
+  }
+)
+
+/** 
+ * @description 更新数组某一项的值
+ */
+export const setArr: AF = R.curry(
+  (arr: any[], index: number, newV): any[] =>
+    newV === arr[index] ? arr : [...arr.slice(0, index), newV, ...arr.slice(index + 1)]
+)

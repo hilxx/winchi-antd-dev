@@ -1,3 +1,5 @@
+.VSCodeCounter
 /config
 node_modules
 .eslintrc.js
+/src/src

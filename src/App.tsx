@@ -5,11 +5,11 @@ import Page from '@src/Page/Test'
 import { hot } from 'react-hot-loader/root'
 import 'antd/dist/antd.css'
 import Wc, { R } from 'winchi'
-import { WcConfig, Alias } from './d'
+import { WcConfig } from './d'
 
 const isDev = process.env.NODE_ENV?.startsWith('dev')
 
-let defaultAlias: Alias = {
+let defaultAlias = {
  small: '紧凑',
  middle: '中等',
  large: '宽松',
@@ -20,6 +20,7 @@ let defaultAlias: Alias = {
  lastStep: '上一步',
  submit: '提交',
  add: '新增',
+ reset: '重置',
 }
 
 let defaultConfig: WcConfig = {
@@ -47,11 +48,10 @@ let defaultConfig: WcConfig = {
   {
    title: '从出生那年就飘着',
    dataIndex: '@handle',
-   fixed: 'right',
-   // width: 100,
+   xIndex: 9,
    handles: {
-    onRemove: <Button type='link' style={{ padding: 0 }} danger>{defaultAlias.remove}</Button>,
     onClickEdit: defaultAlias.edit,
+    onRemove: <Button type='link' style={{ padding: 0 }} danger>{defaultAlias.remove}</Button>,
    }
   }
  ],
@@ -106,7 +106,6 @@ const _uniqLeftColumns = (conf: WcConfig) => ({
 
 const _setWcConfigHandle: AF = (oldConfig, handle: AF) => R.compose(
  handle,
- R.tap(console.log),
  _uniqLeftColumns,
  Wc.mergeDeepRight(oldConfig),
  _effectDefaultAlias(oldConfig),
@@ -158,3 +157,5 @@ export const UseWcConfigRender: React.FC<{ children: (value: WcContextValue) => 
  )
 }
 
+
+export type Alias = typeof defaultAlias

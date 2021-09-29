@@ -5,11 +5,13 @@ import { TableRowSelection } from 'antd/lib/table/interface'
 import { Columns } from '@src/d'
 import { useWcConfig } from '@src/hooks'
 import Wc, { R } from 'winchi'
+import { sortColumns } from '@src/utils'
 
 export interface BaseActionRef {
   reload(o?: AO): Promise<any>
+  /** 支持rowKey 和 row 选择  */
   resetSelectedRows(keys?: (AO | string | number)[]): any
-  resetHistroy(): any
+  clearHistroy(): any
 }
 
 export interface WcBaseTableProps<T extends AO = AO> extends Omit<TableProps<T>, 'columns' | 'rowSelection'> {
@@ -18,7 +20,7 @@ export interface WcBaseTableProps<T extends AO = AO> extends Omit<TableProps<T>,
   composeRequest?(params?: AO, fn?: AF): Promise<any>
   pageSize?: number
   defaultPage?: number
-  actionRef?: React.RefObject<BaseActionRef | undefined>
+  actionRef?: AO | AO[]
   /** 
    * @default checkbox
    * @false 关闭选择
@@ -40,12 +42,13 @@ const WcBaseTable: Model = ({
   defaultPage: defaultPage_,
   pagination: pagination_ = Wc.obj,
   rowSelection: rowSelection_ = Wc.obj,
-  actionRef,
+  actionRef = {},
   rowKey: rowKey_,
   onLoading,
   onSelectRowChange,
   preventFirtstRequest,
   Render = Table,
+  columns: columns_,
   ...props
 }) => {
   const { wcConfig, wcConfigRef } = useWcConfig()
@@ -63,6 +66,23 @@ const WcBaseTable: Model = ({
   const defaultPage = defaultPage_ ?? wcConfig.defaultPage
 
   useEffect(() => {
+    const actionRefArr = Array.isArray(actionRef) ? actionRef : [actionRef]
+    actionRefArr.forEach(actRef => {
+      (actRef as { current: BaseActionRef }).current = {
+        reload(params = {}) {
+          dataSourceMap.clear()
+          isRefreshRef.current = true
+          return request(mergePageParams({ page: wcConfig.defaultPage, size: pageSize })(params))
+        },
+        clearHistroy() {
+          dataSourceMap.clear()
+        },
+        resetSelectedRows: ks => effectSelectedRowKeys(ks, false),
+      }
+    })
+  })
+
+  useEffect(() => {
     if (currentPage === wcConfig.defaultPage && totalRef.current === 0 && preventFirtstRequest) return
     dataSourceMap.has(currentPage) ? setData(dataSourceMap.get(currentPage)!) : request()
   }, [currentPage])
@@ -76,13 +96,13 @@ const WcBaseTable: Model = ({
     b ? spinTimeOutId.current = setTimeout(trigger, 200) : trigger()
   }
 
-  const effectSelectedRowKeys = (ks_: (string | number | AO)[] = Wc.arr) => {
+  const effectSelectedRowKeys: AF = (ks_: (string | number | AO)[] = Wc.arr, triggerChange = true) => {
     const ks = ks_.map(k => Wc.isObj(k) ? k[rowKey] : k)
     if (ks.toString() === selectedRowKeys.toString()) return
     const rows = data.filter(d => ks.includes(d[rowKey]))
     setSelectedRowKeys(ks)
-    onSelectRowChange?.(ks, rows)
-    rowSelection_ !== false && rowSelection_?.onChange?.(ks, rows)
+    triggerChange && onSelectRowChange?.(ks, rows)
+    triggerChange && rowSelection_ !== false && rowSelection_?.onChange?.(ks, rows)
   }
 
   const requestEndResetState = () => {
@@ -123,9 +143,10 @@ const WcBaseTable: Model = ({
   const request = Wc.asyncCompose(
     toggleSpinning(false),
     requestEndResetState,
-    R.when(
+    R.ifElse(
       Wc.isObj,
       effectData,
+      () => setData(Wc.arr),
     ),
     composeRequest,
     mergePageParams({ size: pageSize, page: currentPage + defaultPage }),
@@ -149,22 +170,11 @@ const WcBaseTable: Model = ({
     onChange: effectSelectedRowKeys,
   }
 
-  if (actionRef) {
-    (actionRef as { current: BaseActionRef }).current = {
-      reload(params = {}) {
-        dataSourceMap.clear()
-        isRefreshRef.current = true
-        return request(mergePageParams({ page: wcConfig.defaultPage, size: pageSize })(params))
-      },
-      resetHistroy() {
-        dataSourceMap.clear()
-      },
-      resetSelectedRows: effectSelectedRowKeys,
-    }
-  }
+  const columns = useMemo(() => sortColumns(columns_), [columns_])
 
   return (
     <Render
+      columns={columns}
       scroll={wcConfig.tableScroll}
       {...props}
       rowKey={rowKey}

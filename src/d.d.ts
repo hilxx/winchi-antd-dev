@@ -6,8 +6,8 @@ import type { FormItemProps, FormListProps } from 'antd/lib/form'
 import type { TableHandleKeys } from '@src/index'
 import type { FormProps, FormType } from '@src/Form'
 import type { TableType, TableTypeCombineProps } from '@src/Table'
-
 import type { WcUploadProps } from './Upload'
+import type { Alias } from './App'
 
 export type Size = Exclude<SizeType, void>
 
@@ -59,7 +59,10 @@ export interface Columns<T extends AO = AO> extends ColumnProps<T> {
   formListProps?: ColumnFormListProps
   /** <Form.FormItem><FormComponent {...props}  /></Form.FormItem>  */
   formProps?: FormProps & LayoutSize
-  hideForm?: boolean
+  /** 
+   * @type (d: AO, index: Form.List第几项)
+    */
+  hideForm?: boolean | ((d: T, index?: number) => boolean)
   hideTable?: boolean
   hideDetail?: boolean
   /**
@@ -67,11 +70,6 @@ export interface Columns<T extends AO = AO> extends ColumnProps<T> {
     */
   xIndex?: number
 }
-
-export type AliasKey = Size
-  | 'handle' | 'edit' | 'remove' | 'nextStep' | 'lastStep' | 'submit' | 'add'
-
-export type Alias = Record<AliasKey | string, string>
 
 export interface LoadingText {
   loadingText?: string
@@ -106,7 +104,7 @@ export interface WcConfig {
   /** 
    * @description 默认别名
    */
-  alias: Alias
+  alias: Alias & AO
   /** 
    * @key: 事件名
    * @value: {column, loadingText: 开启后会成为loading提示文字}

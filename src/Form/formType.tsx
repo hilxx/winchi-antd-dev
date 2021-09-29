@@ -61,12 +61,14 @@ const mapFC = {
 
 export const propEventValue = (e?) => e?.target?.value
 
-export const propFormTypeFC: AF = (key: FormType = 'text') => mapFC[key]
+export const propFormType: AF = (key: FormType = 'text') => mapFC[key]
 
 export interface FormComponentWrapProps {
   onChange: AF
-  wcInitVal: any
   Component: React.ComponentType<AO>
+  wcInitVal: any,
+  /** 依赖它来更新value，如果wcInitVal一直为undefined则无法二次触发useEffect  */
+  initialValues: AO
   onChangeComputeValue?: AF
 }
 
@@ -75,14 +77,14 @@ const FormComponentWrap: React.FC<FormComponentWrapProps> = ({
   onChange = Wc.func,
   Component,
   onChangeComputeValue,
+  initialValues,
   ...props
 }) => {
   const [value, setValue] = useState<any>()
 
   useEffect(() => {
     value !== wcInitVal && setValue(wcInitVal)
-  }, [wcInitVal])
-
+  }, [wcInitVal, initialValues])
 
   const changeHandle = (...rest) => {
     const newV = onChangeComputeValue?.(...rest) ?? rest[0]

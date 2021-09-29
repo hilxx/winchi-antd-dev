@@ -4,7 +4,7 @@ import { Form } from 'antd'
 import type { Columns } from '@src/d'
 import { useWcConfig } from '@src/hooks'
 import styles from './index.less'
-import { propFormTypeFC } from '..'
+import { propFormType } from '..'
 import { WcResolveChidrenProps } from '../ResolveChidren'
 
 export type WcFormItemProps<T extends AO = AO> = Columns<T> & WcResolveChidrenProps
@@ -20,9 +20,10 @@ const WcFormItem: Model = ({
  formProps = {},
  hide,
  wcInitVal,
+ initialValues,
 }) => {
  const { wcConfig } = useWcConfig()
- const C = propFormTypeFC(formType)
+ const C = propFormType(formType)
 
  return (
   <Form.Item
@@ -36,11 +37,13 @@ const WcFormItem: Model = ({
     ...style,
     display: hide ? 'none' : style?.display
    }}
+
   >
    <C
+    wcInitVal={wcInitVal}
     size={wcConfig.size}
-    wcInitVal={wcInitVal ?? formItemProps.initialValue}
     {...formProps}
+    initialValues={initialValues}
     style={{ width: formProps.width, ...formProps.style || {} }}
    />
   </Form.Item>

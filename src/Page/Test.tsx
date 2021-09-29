@@ -9,7 +9,7 @@ const request = (config: AxiosRequestConfig) => axios({
   ...config,
   baseURL: '/api',
   headers: {
-    Authorization: 'bearer 1e9d2bc4-580e-4bce-856f-5d7513dabaf1',
+    Authorization: 'bearer 3c5e1c24-8dff-47ed-9ecb-9d736c8df8dc',
   },
 })
 
@@ -23,6 +23,7 @@ const bannerColumns: Columns[] = [
       width: '100%',
     },
     formProps: {
+      rowKey: 'url',
       rowSelection: { type: 'radio' },
       request: (params) => request({
         url: '/material/resource/all?resourceType=PICTURE',
@@ -34,6 +35,7 @@ const bannerColumns: Columns[] = [
         {
           title: '名称',
           dataIndex: 'name',
+          hideForm: true,
         },
         {
           title: '资源',
@@ -66,6 +68,7 @@ const bannerColumns: Columns[] = [
     title: '语言版本',
     dataIndex: 'carouselMapDetails',
     formType: 'list',
+    tableType: 'txt',
     formListProps: {
       width: '70%',
       columns: [
@@ -87,9 +90,15 @@ const bannerColumns: Columns[] = [
           title: '标题',
           dataIndex: 'title',
         },
+        {
+          title: '链接',
+          dataIndex: 'url',
+          hideForm(v) {
+            return v.type !== 'Link'
+          }
+        },
       ]
     },
-
     render(_, { languages: d }) {
       return d.map(R.prop('name')).join('<br />')
     },
@@ -131,6 +140,12 @@ export default () => {
       requestPageSizeKey: 'size',
       columns: [
         {
+          title: '标题',
+          dataIndex: 'title',
+          xIndex: -1,
+          hideForm: true,
+        },
+        {
           title: '权重',
           dataIndex: 'weight',
           formType: 'number',
@@ -142,6 +157,8 @@ export default () => {
           dataIndex: '@handle',
           title: '操作',
           tableType: 'handles',
+          fixed: 'right',
+          width: 100,
         },
       ]
     })
@@ -161,15 +178,21 @@ export default () => {
         methods={{
           onRemove() { return new Promise(resolve => setTimeout(resolve, 3000)) },
           onAdd(d) {
-            console.log(d)
-            return new Promise(r => setTimeout(r, 4000))
+            return request({
+              url: 'carousel/map',
+              method: 'POST',
+              data: d,
+            })
           },
           onEdit(d, row) {
-            console.log(d, row)
-            return new Promise(r => setTimeout(r, 4000))
-
+            return request({
+              url: `carousel/map/${row.id}`,
+              method: 'PUT',
+              data: d,
+            })
           }
         }}
+        eidtValueTransform={_processEditValue}
         composeRequest={composeRequest}
         tabsConfig={{
           onChange(v) {
@@ -196,3 +219,12 @@ export default () => {
   )
 }
 
+const _processEditValue = (v) => {
+  return {
+    ...v,
+    carouselMapDetails: v.languages.map(d => ({
+      languages: d.id + '',
+      title: v.title,
+    }))
+  }
+}

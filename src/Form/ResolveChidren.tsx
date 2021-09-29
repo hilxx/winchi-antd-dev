@@ -2,16 +2,20 @@ import React from 'react'
 import Wc from 'winchi'
 import WcFormItem from './Item'
 import WcFormList from './List'
+import type { FormComponentWrapProps } from './formType'
 
-export interface WcResolveChidrenProps extends AO {
-  hide: boolean
+export interface WcResolveChidrenProps extends Partial<FormComponentWrapProps>, AO {
   wcInitVal: any
+  hide?: boolean
   enum?: AO
 }
 
 type Model = React.FC<WcResolveChidrenProps>
 
-const ResolveChidren: Model = ({ formProps: formProps_ = Wc.obj, ...props }: any) => {
+const ResolveChidren: Model = ({
+  formProps: formProps_ = Wc.obj,
+  ...props
+}) => {
   const formProps = formProps_.options ? formProps_ : {
     ...formProps_,
     options: props.enum && (Array.isArray(props.enum) ? props.enum : _objToLabel(props.enum)),

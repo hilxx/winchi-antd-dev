@@ -83,7 +83,9 @@ const FormComponentWrap: React.FC<FormComponentWrapProps> = ({
   const [value, setValue] = useState<any>()
 
   useEffect(() => {
-    value !== wcInitVal && setValue(wcInitVal)
+    if (wcInitVal === value) return
+    setValue(wcInitVal)
+    onChange(wcInitVal)
   }, [wcInitVal, initialValues])
 
   const changeHandle = (...rest) => {

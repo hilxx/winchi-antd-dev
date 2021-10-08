@@ -29,6 +29,10 @@ export type ColumnsEnum = Record<string | number, React.ReactNode> | OptionProps
 
 export interface Columns<T extends AO = AO> extends ColumnProps<T> {
   /** 
+   * @description 开启顶栏搜索
+   */
+  search?: boolean
+  /** 
    * @description key: 方法名， value： render，在 tableType: handles 开启
    * @example src/Table/index的handles读取Click方法, 如（编辑、删除在配置栏）
     */
@@ -97,6 +101,10 @@ export interface WcConfig {
   requestPageKey: string
   requestPageSizeKey: string
   defaultPage: number
+  /** 
+   * @description {[topTabKey]: value}
+    */
+  topTabKey: string
   tableScroll: {
     x?: number
     y?: number
@@ -122,3 +130,4 @@ export interface WcConfig {
   upload: Omit<WcUploadProps, 'fileList'>
 }
 
+export type { Alias } from './App'

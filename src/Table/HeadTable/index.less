@@ -34,3 +34,27 @@
  width     : 100%;
  text-align: center;
 }
+
+.top-filter {
+ display        : flex;
+ justify-content: space-between;
+ flex-wrap      : wrap;
+
+ &:global {
+  >.ant-divider {
+   display: none;
+  }
+
+  >form .ant-form-item {
+   display: flex;
+  }
+ }
+
+ >form {
+  flex-grow: 1;
+
+  >div {
+   width: 20rem;
+  }
+ }
+}

@@ -1,7 +1,7 @@
-.VSCodeCounter
 node_modules
 .vscode
 .idea
 yarn.lock
 package-lock.json
 /build
+/.VSCodeCounter

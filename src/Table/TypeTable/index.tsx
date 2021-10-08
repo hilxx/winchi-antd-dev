@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import type { ImageProps, ButtonProps } from 'antd'
 import { Button, Divider, Space, Image } from 'antd'
 import Wc, { R } from 'winchi'
-import type { Columns, Methods } from '@src/d'
+import type { Columns, Methods, Alias } from '@src/d'
 import WcBaseTable, { WcBaseTableProps, BaseActionRef } from '../Base'
 import { useWcConfig } from '@src/hooks'
 import { UseWcConfigRender } from '@src/App'
@@ -22,7 +22,7 @@ export interface TableTypeCombineProps<T extends AO = AO> {
 }
 
 export interface WcTypeTableProps<T extends AO = AO> extends WcBaseTableProps<T> {
-  alias?: AO
+  alias?: Alias
   methods?: Methods
   useDefaultColumns?: boolean
 }

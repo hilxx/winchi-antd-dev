@@ -22,6 +22,14 @@ export const fork = (join: AF, f1: AF, f2: AF) => v => join(f1(v), f2(v))
 
 export const identify: AF = v => () => v
 
+/**
+ * @description 等待 callback
+  */
+export const tap: AF = (fn) => async (...v) => {
+  await fn(...v)
+  return v.length < 2 ? v[0] : v
+}
+
 export const curryLazy = R.compose(
   R.curry,
   fn => new Proxy(fn, {
@@ -36,6 +44,7 @@ export const asyncCompose = <D = any>(...fns: AF[]): AsyncComposeReturn<D> => {
   const errCallbacks: AF[] = []
   /** 自顶向下 */
   const thenCallbacks: AF[] = [...fns]
+  const finallyCallbacks: AF[] = []
 
   const f: AsyncComposeReturn = async (data?) => {
     try {
@@ -48,6 +57,8 @@ export const asyncCompose = <D = any>(...fns: AF[]): AsyncComposeReturn<D> => {
       const reject = errCallbacks.reduce((promise, cb) => promise.catch(cb), Promise.reject<any>(e))
       const d = await reject
       return d == undefined ? Promise.reject(d) : d
+    } finally {
+      finallyCallbacks.forEach(f => f())
     }
   }
 
@@ -57,8 +68,7 @@ export const asyncCompose = <D = any>(...fns: AF[]): AsyncComposeReturn<D> => {
   }
 
   f.finally = cb => {
-    errCallbacks.push(cb)
-    thenCallbacks.splice(0, 0, cb)
+    finallyCallbacks.push(cb)
     return f
   }
 

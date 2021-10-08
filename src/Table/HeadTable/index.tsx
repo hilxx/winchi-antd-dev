@@ -4,11 +4,11 @@ import type { TabPaneProps } from 'antd/lib/tabs'
 import { ColumnHeightOutlined, LoadingOutlined, SyncOutlined } from '@ant-design/icons'
 import Wc, { R } from 'winchi'
 import { Size } from '@src/d'
-import { useWcConfig } from '@src/hooks'
-import WcBaseTable, { WcTypeTableProps, TypeActionRef } from '../TypeTable'
-
-import styles from './index.less'
 import { actionLoading } from '@src/utils'
+import { useWcConfig } from '@src/hooks'
+import WcForm, { FormRef } from '@src/Form'
+import WcBaseTable, { WcTypeTableProps, TypeActionRef } from '../TypeTable'
+import styles from './index.less'
 
 export type HeadActionRef = TypeActionRef
 
@@ -33,7 +33,8 @@ export interface WcHeadTableProps<T extends AO = AO> extends WcTypeTableProps<T>
     onChange?(key: any): any,
     requestKey?: string
     defaultTab?: string
-  }
+  },
+  history?: boolean
 }
 
 type Model = React.FC<WcHeadTableProps>
@@ -44,7 +45,7 @@ const WcHeadTable: Model = ({
   actionRef: actionRef_ = {},
   onSelectRowChange: onSelectRowChange_,
   hideControl,
-  filter,
+  filter = true,
   controls,
   methods: methods_ = Wc.obj,
   pagination,
@@ -53,33 +54,44 @@ const WcHeadTable: Model = ({
   style,
   preventFirtstRequest,
   Render = WcBaseTable,
+  columns,
+  alias = Wc.obj,
+  history = true,
+  composeRequest: composeRquest_,
   ...props
 }) => {
   const [loading, setLoading] = useState(false)
   const { wcConfig, setWcConfig } = useWcConfig()
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [currentTabKey, setCurrentTabKey] = useState(tabsConfig?.defaultTab ?? tabsConfig?.tabs?.[0]?.tabKey)
+  const filterFormValues = useMemo(() => new Map<string, Map<string, any>>(), [])
+  const historyMap = useMemo(() => new Map<string, any>(), [])
+  const filterFormRef = useRef<FormRef>()
   const actionRef = useRef<HeadActionRef>()
   const selectedRowsRef = useRef<any[]>()
 
+  const topTabKey = tabsConfig?.requestKey ?? wcConfig.topTabKey
+  const currentHistoryKey = `${currentTabKey}`
+
+  const composeReload = (f: AF = Wc.func, key) => (params = Wc.obj) =>
+    f({
+      [topTabKey]: key,
+      ...filterFormValues.get(key) ?? Wc.obj,
+      ...params,
+    })
+
   useEffect(() => {
     if (actionRef.current) {
-      const reload = actionRef.current.reload
       const actionRefArr = Array.isArray(actionRef_) ? actionRef_ : [actionRef_]
+      const reload = actionRef.current.reload
 
-      actionRef.current.reload = tabsConfig?.requestKey
-        ? (params = Wc.obj) => {
-          return reload({
-            [tabsConfig.requestKey!]: currentTabKey,
-            ...params
-          })
-        } : reload
+      actionRef.current.reload = composeReload(reload, currentTabKey)
 
       actionRefArr.forEach(actRef => {
         (actRef as any).current = actionRef.current
       })
     }
-  })
+  }, [actionRef, topTabKey, currentTabKey])
 
   useEffect(() => {
     preventFirtstRequest || effectTabChange(currentTabKey)
@@ -93,6 +105,17 @@ const WcHeadTable: Model = ({
       methods,
     }
   }, [methods_])
+
+  const composeRequest: WcTypeTableProps['composeRequest'] = async (params, f) => {
+    const currentHistoryMap = historyMap.get(currentHistoryKey) || new Map()
+    const json = JSON.stringify(params)
+    historyMap.set(currentHistoryKey, currentHistoryMap)
+    return currentHistoryMap.has(json) && history
+      ? currentHistoryMap.get(json)
+      : currentHistoryMap
+        .set(json, await (composeRquest_ ? composeRquest_(params, f) : f?.(params)))
+        .get(json)
+  }
 
   const loadingHandle = (b: boolean) => {
     onLoading?.(b)
@@ -115,12 +138,14 @@ const WcHeadTable: Model = ({
   }
 
   const effectTabChange = (key) => {
-    if (key !== currentTabKey) {
-      tabsConfig?.onChange?.(key)
-      setCurrentTabKey(key)
-      actionRef.current?.clearHistroy()
-    }
-    tabsConfig?.requestKey && actionRef.current?.reload({ [tabsConfig.requestKey]: key })
+    if (key === currentTabKey) return
+    tabsConfig?.onChange?.(key)
+    setCurrentTabKey(key)
+    actionRef.current?.clearHistroy()
+    composeReload(actionRef.current?.reload, key)()
+    filterFormValues.set(currentTabKey!, filterFormRef.current?.getFieldsValue() || Wc.obj)
+    filterFormValues.has(key) && filterFormRef.current?.setValues(filterFormValues.get(key)!)
+    return
   }
 
   const tabChangeHandle = R.unless(
@@ -128,10 +153,38 @@ const WcHeadTable: Model = ({
     effectTabChange,
   )
 
-  const filterJSX = (
-    <section>
-    </section>
+  const filterHandle = actionRef.current?.reload
+
+  const resetHandle = R.compose(
+    filterHandle as AF,
+    () => {
+      filterFormValues.delete(currentTabKey!)
+    },
   )
+
+  const filterJSX = useMemo(() => {
+    const cc = columns.filter(R.prop('search') as any).map(o => ({
+      ...o,
+      hideForm: false,
+      formItemProps: {
+        ...o.formItemProps || Wc.obj,
+        rules: undefined,
+      },
+    }))
+    return cc.length ? (
+      <WcForm
+        formRef={filterFormRef}
+        className={styles['top-filter']}
+        columns={cc}
+        alias={{
+          submit: alias.search ?? wcConfig.alias?.search,
+          ...alias as any,
+        }}
+        onSubmit={filterHandle}
+        onReset={resetHandle}
+      />
+    ) : null
+  }, [columns, alias, wcConfig])
 
   const columnHeightMenuJSX = (
     <Menu
@@ -260,6 +313,8 @@ const WcHeadTable: Model = ({
         {filter ? filterJSX : null}
         {hideControl ? null : tableHeaderJSX}
         <Render
+          composeRequest={composeRequest}
+          columns={columns}
           methods={methods}
           size={wcConfig.size}
           actionRef={actionRef}

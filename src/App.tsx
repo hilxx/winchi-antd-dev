@@ -21,6 +21,8 @@ let defaultAlias = {
  submit: '提交',
  add: '新增',
  reset: '重置',
+ search: '查询',
+ tableErr: '请求失败',
 }
 
 let defaultConfig: WcConfig = {
@@ -29,6 +31,7 @@ let defaultConfig: WcConfig = {
  totalKey: 'total',
  requestPageKey: 'page',
  requestPageSizeKey: 'pageSize',
+ topTabKey: '__topTab',
  defaultPage: 0,
  pageSize: 40,
  tableScroll: {

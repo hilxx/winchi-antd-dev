@@ -9,7 +9,7 @@ const request = (config: AxiosRequestConfig) => axios({
   ...config,
   baseURL: '/api',
   headers: {
-    Authorization: 'bearer 3c5e1c24-8dff-47ed-9ecb-9d736c8df8dc',
+    Authorization: 'bearer 6273f8df-dfe2-4d4f-9143-ac508b1393dd',
   },
 })
 
@@ -118,6 +118,22 @@ const learnColumns: Columns[] = [
   {
     title: '标签',
     dataIndex: 'labelName',
+    formType: 'select',
+    search: true,
+    formItemProps: {
+      rules: [
+        {
+          required: true,
+          message: '必填'
+        }
+      ]
+    },
+    enum: () => request({
+      url: '/plant/all',
+    }).then(d => {
+      return d.data.data.reduce((r, d) => ({ ...r, [d.id]: d.name }), {})
+    }),
+
   },
   {
     title: '类型',
@@ -144,6 +160,7 @@ export default () => {
           dataIndex: 'title',
           xIndex: -1,
           hideForm: true,
+          search: true,
         },
         {
           title: '权重',
@@ -164,12 +181,19 @@ export default () => {
     })
   }, [])
 
-  const composeRequest = ({ requestUrl, ...params }) =>
-    request({
+  const composeRequest = ({ requestUrl, ...params }) => {
+
+    return request({
       method: 'GET',
       url: requestUrl,
-      params,
+      params: {
+        ...params,
+        name: params.title,
+        title: undefined,
+      },
     }).then(d => d.data.data)
+  }
+
 
   return (
     <>
@@ -208,7 +232,7 @@ export default () => {
               tab: '轮播图',
             },
             {
-              tabKey: '/plant/contents',
+              tabKey: '/plant/contents/name',
               tab: '了解植物研发中心',
             },
           ],

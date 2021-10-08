@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Table } from 'antd'
+import { message, Table } from 'antd'
 import { TableProps, TablePaginationConfig } from 'antd/lib/table'
 import { TableRowSelection } from 'antd/lib/table/interface'
 import { Columns } from '@src/d'
@@ -17,7 +17,7 @@ export interface BaseActionRef {
 export interface WcBaseTableProps<T extends AO = AO> extends Omit<TableProps<T>, 'columns' | 'rowSelection'> {
   columns: Columns<T>[]
   request?(params?: any[]): Promise<AO>
-  composeRequest?(params?: AO, fn?: AF): Promise<any>
+  composeRequest?(params?: AO, fn?: AF): Promise<any> | any
   pageSize?: number
   defaultPage?: number
   actionRef?: AO | AO[]
@@ -53,7 +53,7 @@ const WcBaseTable: Model = ({
 }) => {
   const { wcConfig, wcConfigRef } = useWcConfig()
   const [spinning, setSpinning] = useState(true)
-  const [data, setData] = useState<AO[]>([])
+  const [data, setData] = useState<AO[]>(Wc.arr)
   const [currentPage, setCurrentPage] = useState(0)
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const rowKey = useMemo<string>(() => (typeof rowKey_ === 'function' ? rowKey() : rowKey_) ?? 'id', [rowKey_])
@@ -67,20 +67,19 @@ const WcBaseTable: Model = ({
 
   useEffect(() => {
     const actionRefArr = Array.isArray(actionRef) ? actionRef : [actionRef]
-    actionRefArr.forEach(actRef => {
-      (actRef as { current: BaseActionRef }).current = {
-        reload(params = {}) {
-          dataSourceMap.clear()
-          isRefreshRef.current = true
-          return request(mergePageParams({ page: wcConfig.defaultPage, size: pageSize })(params))
-        },
-        clearHistroy() {
-          dataSourceMap.clear()
-        },
-        resetSelectedRows: ks => effectSelectedRowKeys(ks, false),
-      }
-    })
-  })
+    const action: BaseActionRef = {
+      reload(params = {}) {
+        dataSourceMap.clear()
+        isRefreshRef.current = true
+        return request(mergePageParams({ page: wcConfig.defaultPage, size: pageSize })(params))
+      },
+      clearHistroy() {
+        dataSourceMap.clear()
+      },
+      resetSelectedRows: ks => effectSelectedRowKeys(ks, false),
+    }
+    actionRefArr.forEach(actRef => actRef.current = action)
+  }, [actionRef])
 
   useEffect(() => {
     if (currentPage === wcConfig.defaultPage && totalRef.current === 0 && preventFirtstRequest) return
@@ -135,9 +134,12 @@ const WcBaseTable: Model = ({
     composeRequest_ ? R.curryN(2, composeRequest_)(R.__, request_) : request_,
   )
 
-  const requestCatch = R.unless(
+  const requestCatch = R.ifElse(
     R.equals(setData),
     toggleSpinning(false),
+    (e) => {
+      message.error(`${wcConfig.alias.tableErr}(${e.toString().match(/\d+/) || ''})`)
+    }
   )
 
   const request = Wc.asyncCompose(

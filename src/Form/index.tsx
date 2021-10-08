@@ -1,16 +1,20 @@
 import React, { createContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { FormInstance } from 'antd'
-import { Form, Button, Steps, Divider, message } from 'antd'
+import { Form, Button, Steps, Divider } from 'antd'
 import { LoadingOutlined } from '@ant-design/icons'
 import Wc, { R } from 'winchi'
-import { Columns } from '@src/d'
+import { Columns, Alias } from '@src/d'
 import { useWcConfig } from '@src/hooks'
 import { propFormType } from './formType'
 import ResolveChidren from './ResolveChidren'
 import styles from './index.less'
 import { sortColumns, naughtyHideForm } from '@src/utils'
 
-export type FormRef = FormInstance
+export interface FormRef extends FormInstance {
+  toggleSubmitLoading(b: boolean): any
+  reset(): any
+  setValues(values: AO): any
+}
 
 export interface WcFormProps<T extends AO = AO>
   extends Omit<React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>, 'onSubmit'> {
@@ -23,8 +27,10 @@ export interface WcFormProps<T extends AO = AO>
    * @description 分布表单步骤标题
     */
   steps?: string[]
-  onSubmit?(data: T, defaultData?: T): Promise<any>
-  formRef?: React.RefObject<FormInstance | undefined> | React.RefObject<FormInstance | undefined>[]
+  onSubmit?(data: T, defaultData?: T): any
+  onReset?(): any
+  formRef?: React.RefObject<FormRef | undefined> | React.RefObject<FormRef | undefined>[]
+  alias?: Alias
 }
 
 export interface WcFormContextValue {
@@ -50,6 +56,8 @@ const WcForm: Model = ({
   onSubmit,
   className = '',
   formRef: formRef_ = {},
+  alias: alias_ = Wc.obj,
+  onReset = Wc.func,
   ...props
 }) => {
   const { wcConfig } = useWcConfig()
@@ -60,7 +68,12 @@ const WcForm: Model = ({
 
   const formChangeDispatchMap = useMemo(() => new Map(), [])
   const flatColumns = useMemo(() => columns.flat(), [columns])
-  const formRef = useRef<FormInstance>(null)
+  const formRef = useRef<FormRef>(null)
+  const alias = new Proxy(alias_, {
+    get(target, key) {
+      return Reflect.get(Reflect.has(target, key) ? target : wcConfig.alias, key)
+    }
+  })
 
   useEffect(R.compose(
     setColumns,
@@ -74,10 +87,21 @@ const WcForm: Model = ({
   ), [columns_])
 
   useEffect(() => {
-    const formRefArr = Array.isArray(formRef_) ? formRef_ : [formRef_]
-    formRefArr.forEach(actRef => {
-      (actRef as any).current = formRef.current
-    })
+    const action: Partial<FormRef> = {
+      ...formRef.current,
+      toggleSubmitLoading(bool) {
+        setLoading(bool)
+      },
+      reset() {
+        setCurrentStep(0)
+        setInitialValues(Object.values(flatColumns).reduce((r, c) =>
+          c.formType === 'list' ? { ...r, [c.dataIndex as any]: Wc.arr } : r, {}))
+      },
+      setValues: setInitialValues,
+    }
+
+    const formRefArr = (Array.isArray(formRef_) ? formRef_ : [formRef_]).concat(formRef)
+    formRefArr.forEach(actRef => (actRef as any).current = action)
   })
 
   useEffect(() => {
@@ -103,12 +127,6 @@ const WcForm: Model = ({
   const checkValidata = () =>
     formRef.current?.validateFields(columns[currentStep]?.map(R.prop('dataIndex') as AF))
 
-  const resetForm = () => {
-    setCurrentStep(0)
-    setInitialValues(Object.values(flatColumns).reduce((r, c) =>
-      c.formType === 'list' ? { ...r, [c.dataIndex as any]: Wc.arr } : r, {}))
-  }
-
   const formChangeDispatch = d => Array.from(formChangeDispatchMap.values()).forEach(f => f?.(d))
 
   const submitBefore = Wc.asyncCompose(
@@ -117,28 +135,31 @@ const WcForm: Model = ({
   )
 
   const submitHandle = Wc.asyncCompose(
-    resetForm,
     async () => {
       const vs = formRef.current?.getFieldsValue()
       await onSubmit?.(vs, initialValues)
     },
     submitBefore,
   ).catch((err) => {
-    message.error('')
-    console.error(`form submiting`, err)
+    console.log(`form submiting`, err)
   }).finally(() => {
     setLoading(false)
   })
 
-  const clickNextHandle = index => Wc.asyncCompose(
-    R.ifElse(
-      R.gte(stepMaxNum),
-      setCurrentStep,
-      submitHandle,
-    ),
-    Wc.identify(index),
+  const clickNextHandle = Wc.asyncCompose(
+    () => currentStep + 1 < stepMaxNum ? setCurrentStep(currentStep + 1) : submitHandle(),
     checkValidata,
-  )()
+  )
+
+  const clickResetHandle = () => {
+    formRef.current?.reset()
+    onReset()
+  }
+
+  const formSubmitCatureHandle = e => {
+    e.nativeEvent.preventDefault()
+    clickNextHandle()
+  }
 
   const formValueDispatch = R.compose(
     Wc.debounce(100, R.compose(setColumns, Wc.setArr(columns, currentStep))),
@@ -157,12 +178,10 @@ const WcForm: Model = ({
       />
     ))
 
-  const footerJSX = (
+  const footerJSX = columns[currentStep]?.length ? (
     <footer className={styles.footer}>
-      <Button
-        onClick={resetForm}
-      >
-        {wcConfig.alias.reset}
+      <Button size={wcConfig.size} onClick={clickResetHandle}>
+        {alias.reset}
       </Button>
       <section>
         {
@@ -171,20 +190,21 @@ const WcForm: Model = ({
               size={wcConfig.size}
               onClick={() => setCurrentStep(currentStep - 1)}
             >
-              {wcConfig.alias.lastStep}
+              {alias.lastStep}
             </Button>
             : null
         }
         <Button
           size={wcConfig.size}
           loading={currentStep + 1 === columns?.length && loading}
-          onClick={() => clickNextHandle(currentStep + 1)}
+          onClick={clickNextHandle}
+          type='primary'
         >
-          {currentStep === stepMaxNum ? wcConfig.alias.submit : wcConfig.alias.nextStep}
+          {currentStep === stepMaxNum ? alias.submit : alias.nextStep}
         </Button>
       </section>
     </footer>
-  )
+  ) : null
 
   return (
     <WcFormContext.Provider value={{
@@ -211,8 +231,10 @@ const WcForm: Model = ({
           ref={formRef}
           className={styles.form}
           onValuesChange={R.flip(formValueDispatch)}
+          onSubmitCapture={formSubmitCatureHandle}
         >
           {formItemJSX}
+          <button type='submit' style={{ display: 'none' }} />
         </Form>
         {footerJSX}
       </main>

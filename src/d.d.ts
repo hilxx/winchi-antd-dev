@@ -91,10 +91,6 @@ export interface WcConfig {
    * @description 当前table 设置紧凑程度
     */
   size?: Size
-  /** 
-   * @description 请求超时时间(ms)
-    */
-  timeout: number
   dataKey: GetKey
   totalKey: GetKey
   pageSize: number

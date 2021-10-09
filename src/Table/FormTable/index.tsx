@@ -1,9 +1,9 @@
-import React, { useEffect, useRef } from 'react'
-import WcTable, { WcHeadTableProps, HeadActionRef } from '../HeadTable'
-import Wc, { R } from 'winchi'
+import React, { useEffect, useRef, useState } from 'react'
+import WcTable, { WcFilterTableProps, HeadActionRef } from '../FilterTable'
+import Wc from 'winchi'
 import styles from './index.less'
 
-export interface WcFormTableProps<T extends AO = AO> extends Omit<WcHeadTableProps<T>, 'onChange' | 'onSelectRowChange'> {
+export interface WcFormTableProps<T extends AO = AO> extends Omit<WcFilterTableProps<T>, 'onChange' | 'onSelectRowChange'> {
  onChange?(v): any
  value?: any,
 }
@@ -20,12 +20,17 @@ const WcFormTable: Model = ({
  className = '',
  ...props
 }) => {
+ const [selectRows, setSelectRows] = useState<any[]>()
  const actionRef = useRef<HeadActionRef>()
  if (actionRef_) (actionRef_ as AO).current = actionRef.current
 
  useEffect(() => {
-  actionRef.current?.resetSelectedRows(Array.isArray(value) ? value : [value])
+  value !== selectRows && actionRef.current?.resetSelectedRows(Array.isArray(value) ? value : [value])
  }, [value])
+
+ useEffect(() => {
+  onChange?.(selectRows)
+ }, [selectRows])
 
  return (
   <WcTable
@@ -35,7 +40,7 @@ const WcFormTable: Model = ({
    hideControl
    useDefaultColumns={useDefaultColumns}
    actionRef={actionRef}
-   onSelectRowChange={onChange && R.flip(onChange)}
+   onSelectRowChange={setSelectRows}
    style={{ padding: 0, ...style }}
    pageSize={10}
    {...props}

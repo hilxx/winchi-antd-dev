@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Alert, Button, Dropdown, Menu, Popconfirm, Spin, Tooltip, Tabs } from 'antd'
+import { Alert, Button, Dropdown, Menu, Popconfirm, Spin, Tooltip, Tabs, Divider } from 'antd'
 import type { TabPaneProps } from 'antd/lib/tabs'
 import { ColumnHeightOutlined, LoadingOutlined, SyncOutlined } from '@ant-design/icons'
 import Wc, { R } from 'winchi'
@@ -12,7 +12,7 @@ import styles from './index.less'
 
 export type HeadActionRef = TypeActionRef
 
-export interface WcHeadTableProps<T extends AO = AO> extends WcTypeTableProps<T> {
+export interface WcFilterTableProps<T extends AO = AO> extends WcTypeTableProps<T> {
   onClickAdd?: AF
   /** 关闭新增删除...more 的控制按键  */
   hideControl?: boolean
@@ -37,9 +37,9 @@ export interface WcHeadTableProps<T extends AO = AO> extends WcTypeTableProps<T>
   history?: boolean
 }
 
-type Model = React.FC<WcHeadTableProps>
+type Model = React.FC<WcFilterTableProps>
 
-const WcHeadTable: Model = ({
+const WcFilterTable: Model = ({
   onClickAdd,
   onLoading,
   actionRef: actionRef_ = {},
@@ -56,22 +56,18 @@ const WcHeadTable: Model = ({
   Render = WcBaseTable,
   columns,
   alias = Wc.obj,
-  history = true,
-  composeRequest: composeRquest_,
   ...props
 }) => {
   const [loading, setLoading] = useState(false)
   const { wcConfig, setWcConfig } = useWcConfig()
-  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
-  const [currentTabKey, setCurrentTabKey] = useState(tabsConfig?.defaultTab ?? tabsConfig?.tabs?.[0]?.tabKey)
+  const [selectedRows, setSelectedRows] = useState<any[]>([])
+  const [currentTabKey, setCurrentTabKey] = useState()
   const filterFormValues = useMemo(() => new Map<string, Map<string, any>>(), [])
-  const historyMap = useMemo(() => new Map<string, any>(), [])
   const filterFormRef = useRef<FormRef>()
   const actionRef = useRef<HeadActionRef>()
   const selectedRowsRef = useRef<any[]>()
 
   const topTabKey = tabsConfig?.requestKey ?? wcConfig.topTabKey
-  const currentHistoryKey = `${currentTabKey}`
 
   const composeReload = (f: AF = Wc.func, key) => (params = Wc.obj) =>
     f({
@@ -84,17 +80,16 @@ const WcHeadTable: Model = ({
     if (actionRef.current) {
       const actionRefArr = Array.isArray(actionRef_) ? actionRef_ : [actionRef_]
       const reload = actionRef.current.reload
-
       actionRef.current.reload = composeReload(reload, currentTabKey)
 
       actionRefArr.forEach(actRef => {
         (actRef as any).current = actionRef.current
       })
     }
-  }, [actionRef, topTabKey, currentTabKey])
+  })
 
   useEffect(() => {
-    preventFirtstRequest || effectTabChange(currentTabKey)
+    preventFirtstRequest || effectTabChange(tabsConfig?.defaultTab ?? tabsConfig?.tabs?.[0]?.tabKey)
   }, [])
 
   const { onRemoves, methods } = useMemo(() => {
@@ -106,29 +101,19 @@ const WcHeadTable: Model = ({
     }
   }, [methods_])
 
-  const composeRequest: WcTypeTableProps['composeRequest'] = async (params, f) => {
-    const currentHistoryMap = historyMap.get(currentHistoryKey) || new Map()
-    const json = JSON.stringify(params)
-    historyMap.set(currentHistoryKey, currentHistoryMap)
-    return currentHistoryMap.has(json) && history
-      ? currentHistoryMap.get(json)
-      : currentHistoryMap
-        .set(json, await (composeRquest_ ? composeRquest_(params, f) : f?.(params)))
-        .get(json)
-  }
-
   const loadingHandle = (b: boolean) => {
     onLoading?.(b)
     setLoading(b)
+    filterFormRef.current?.toggleSubmitLoading(b)
   }
 
   const refreshTable = () => {
-    effectTabChange(currentTabKey)
+    actionRef.current?.reload()
   }
 
-  const selectRowChangeHandle: WcHeadTableProps['onSelectRowChange'] = (keys, rows) => {
-    onSelectRowChange_?.(keys, rows)
-    setSelectedRowKeys(keys)
+  const selectRowChangeHandle: WcFilterTableProps['onSelectRowChange'] = (rows, keys) => {
+    onSelectRowChange_?.(rows, keys)
+    setSelectedRows(rows)
     selectedRowsRef.current = rows
   }
 
@@ -141,14 +126,14 @@ const WcHeadTable: Model = ({
     if (key === currentTabKey) return
     tabsConfig?.onChange?.(key)
     setCurrentTabKey(key)
-    actionRef.current?.clearHistroy()
-    composeReload(actionRef.current?.reload, key)()
     filterFormValues.set(currentTabKey!, filterFormRef.current?.getFieldsValue() || Wc.obj)
     filterFormValues.has(key) && filterFormRef.current?.setValues(filterFormValues.get(key)!)
+
+    composeReload(actionRef.current?.reload, key)()
     return
   }
 
-  const tabChangeHandle = R.unless(
+  const tabChangeHandle: AF = R.unless(
     R.equals(currentTabKey),
     effectTabChange,
   )
@@ -162,6 +147,10 @@ const WcHeadTable: Model = ({
     },
   )
 
+  const getFeature = (params: AO) => {
+    return params[topTabKey]
+  }
+
   const filterJSX = useMemo(() => {
     const cc = columns.filter(R.prop('search') as any).map(o => ({
       ...o,
@@ -172,17 +161,20 @@ const WcHeadTable: Model = ({
       },
     }))
     return cc.length ? (
-      <WcForm
-        formRef={filterFormRef}
-        className={styles['top-filter']}
-        columns={cc}
-        alias={{
-          submit: alias.search ?? wcConfig.alias?.search,
-          ...alias as any,
-        }}
-        onSubmit={filterHandle}
-        onReset={resetHandle}
-      />
+      <>
+        <WcForm
+          formRef={filterFormRef}
+          className={styles['top-filter']}
+          columns={cc}
+          alias={{
+            submit: alias.search ?? wcConfig.alias?.search,
+            ...alias as any,
+          }}
+          onSubmit={filterHandle}
+          onReset={resetHandle}
+        />
+        <Divider dashed />
+      </>
     ) : null
   }, [columns, alias, wcConfig])
 
@@ -207,8 +199,8 @@ const WcHeadTable: Model = ({
         indicator={<></>}
       >
         <Alert
-          style={{ visibility: selectedRowKeys.length ? 'visible' : 'hidden' }}
-          message={`已选择 ${selectedRowKeys.length} 项`}
+          style={{ visibility: selectedRows.length ? 'visible' : 'hidden' }}
+          message={`已选择 ${selectedRows.length} 项`}
           type='info'
           action={
             <>
@@ -228,7 +220,7 @@ const WcHeadTable: Model = ({
                       type='text'
                     >
                       {/* 第一时间隐藏文字 */}
-                      {selectedRowKeys.length ? '批量删除' : ' '}
+                      {selectedRows.length ? '批量删除' : ' '}
                     </Button>
                   </Popconfirm>
                 )
@@ -240,7 +232,7 @@ const WcHeadTable: Model = ({
                 onClick={() => actionRef.current?.resetSelectedRows()}
               >
                 {/* 第一时间隐藏文字 */}
-                {selectedRowKeys.length ? '取消选择' : ' '}
+                {selectedRows.length ? '取消选择' : ' '}
               </Button>
             </>
           }
@@ -313,7 +305,7 @@ const WcHeadTable: Model = ({
         {filter ? filterJSX : null}
         {hideControl ? null : tableHeaderJSX}
         <Render
-          composeRequest={composeRequest}
+          getFeature={getFeature}
           columns={columns}
           methods={methods}
           size={wcConfig.size}
@@ -329,7 +321,4 @@ const WcHeadTable: Model = ({
   )
 }
 
-export default React.memo<Model>(WcHeadTable)
-
-
-
+export default React.memo<Model>(WcFilterTable)

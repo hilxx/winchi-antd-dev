@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import { Modal } from 'antd'
 import Wc, { R } from 'winchi'
 import { propDataIndex, processEnum, actionLoading } from '@src/utils'
@@ -47,24 +47,22 @@ const WcPage: Model = ({
   ...Wc.messageComposeMethod(actionLoading, wcConfig.handlesMessage, methods_),
  }), [methods_])
 
+ const updateColumns = useCallback((newC, index) => setColumns((old => [
+  ...old.slice(0, index),
+  newC,
+  ...old.slice(index + 1),
+ ] as any[])
+ ), [])
+
  const submitHandle = async (vs) => {
   await (values ? methods.onEdit?.(vs, values) : methods.onAdd?.(vs))
   setModalVisible(false)
   setValues(undefined)
  }
 
- const queryColumnEnum: AF = processEnum(
-  (newC, index) => setColumns((old => [
-   ...old.slice(0, index),
-   newC,
-   ...old.slice(index + 1),
-  ] as any[])
-  )
- )
-
  useEffect(R.compose(
   Wc.sep(
-   arr => arr.forEach(queryColumnEnum),
+   arr => arr.forEach(processEnum(updateColumns)),
    setColumns
   ),
   R.map(_forceHideExhibit),

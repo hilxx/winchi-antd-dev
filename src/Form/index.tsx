@@ -236,6 +236,7 @@ const WcForm: Model = ({
           {formItemJSX}
           <button type='submit' style={{ display: 'none' }} />
         </Form>
+        <Divider dashed />
         {footerJSX}
       </main>
     </WcFormContext.Provider >

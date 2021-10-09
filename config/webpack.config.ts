@@ -17,7 +17,7 @@ const getDevConfig = async (
   mode: 'development',
   entry: ['react-hot-loader/patch', './src/index.tsx'],
   stats: 'errors-only',
-  devtool: 'cheap-module-source-map',
+  devtool: 'inline-source-map',
   devServer: {
    port,
    hot: true,

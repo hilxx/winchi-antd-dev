@@ -1,12 +1,5 @@
 @import '~@src/App.less';
 
-.wrap {
- >* {
-  &:nth-child(2) {
-   margin: @margin-sm 0;
-  }
- }
-}
 
 .form {
  max-height: 70vh;
@@ -15,6 +8,7 @@
  overflow-y: auto;
  transition: .25s linear;
  gap       : @margin-sm;
+
 }
 
 .title {
@@ -23,8 +17,13 @@
 
 .footer {
  display        : flex;
- margin-top     : @margin-sm;
  justify-content: space-between;
+ gap            : @margin-sm;
+
+ @media (max-width: 600px) {
+  width          : 100%;
+  justify-content: flex-end;
+ }
 }
 
 .form-ele {

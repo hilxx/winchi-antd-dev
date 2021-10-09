@@ -11,13 +11,12 @@ export interface BaseActionRef {
   reload(o?: AO): Promise<any>
   /** 支持rowKey 和 row 选择  */
   resetSelectedRows(keys?: (AO | string | number)[]): any
-  clearHistroy(): any
 }
 
 export interface WcBaseTableProps<T extends AO = AO> extends Omit<TableProps<T>, 'columns' | 'rowSelection'> {
   columns: Columns<T>[]
   request?(params?: any[]): Promise<AO>
-  composeRequest?(params?: AO, fn?: AF): Promise<any> | any
+  composeRequest?(params: AO, fn: AF): Promise<any> | any
   pageSize?: number
   defaultPage?: number
   actionRef?: AO | AO[]
@@ -27,7 +26,7 @@ export interface WcBaseTableProps<T extends AO = AO> extends Omit<TableProps<T>,
     */
   rowSelection?: TableRowSelection<T> | false
   onLoading?(boolean): any
-  onSelectRowChange?(keys: Key[], rows: T[]): any
+  onSelectRowChange?(rows: T[], keys: Key[]): any
   preventFirtstRequest?: boolean
   /** 替代Table组件, 默认是 antd.Table */
   Render?: React.ComponentType
@@ -57,7 +56,6 @@ const WcBaseTable: Model = ({
   const [currentPage, setCurrentPage] = useState(0)
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const rowKey = useMemo<string>(() => (typeof rowKey_ === 'function' ? rowKey() : rowKey_) ?? 'id', [rowKey_])
-  const dataSourceMap = useMemo(() => new Map<number, AO[]>(), [])
   const totalRef = useRef<number>(0)
   const isRefreshRef = useRef<boolean>(false)
   const requestDebounceRef = useRef<AF>(Wc.debouncePromise(setData))
@@ -69,21 +67,17 @@ const WcBaseTable: Model = ({
     const actionRefArr = Array.isArray(actionRef) ? actionRef : [actionRef]
     const action: BaseActionRef = {
       reload(params = {}) {
-        dataSourceMap.clear()
         isRefreshRef.current = true
         return request(mergePageParams({ page: wcConfig.defaultPage, size: pageSize })(params))
       },
-      clearHistroy() {
-        dataSourceMap.clear()
-      },
-      resetSelectedRows: ks => effectSelectedRowKeys(ks, false),
+      resetSelectedRows: effectSelectedRowKeys,
     }
     actionRefArr.forEach(actRef => actRef.current = action)
   }, [actionRef])
 
   useEffect(() => {
     if (currentPage === wcConfig.defaultPage && totalRef.current === 0 && preventFirtstRequest) return
-    dataSourceMap.has(currentPage) ? setData(dataSourceMap.get(currentPage)!) : request()
+    request()
   }, [currentPage])
 
   const toggleSpinning = (b: boolean) => () => {
@@ -95,13 +89,12 @@ const WcBaseTable: Model = ({
     b ? spinTimeOutId.current = setTimeout(trigger, 200) : trigger()
   }
 
-  const effectSelectedRowKeys: AF = (ks_: (string | number | AO)[] = Wc.arr, triggerChange = true) => {
+  const effectSelectedRowKeys: AF = (ks_: (string | number | AO)[] = Wc.arr) => {
     const ks = ks_.map(k => Wc.isObj(k) ? k[rowKey] : k)
-    if (ks.toString() === selectedRowKeys.toString()) return
     const rows = data.filter(d => ks.includes(d[rowKey]))
     setSelectedRowKeys(ks)
-    triggerChange && onSelectRowChange?.(ks, rows)
-    triggerChange && rowSelection_ !== false && rowSelection_?.onChange?.(ks, rows)
+    onSelectRowChange?.(rows, ks)
+    rowSelection_ !== false && rowSelection_?.onChange?.(ks, rows)
   }
 
   const requestEndResetState = () => {
@@ -112,7 +105,6 @@ const WcBaseTable: Model = ({
   const effectData: AF = d => {
     const newData = Wc.prop(wcConfigRef.current!.dataKey, d)
     const totalPage = Wc.prop(wcConfigRef.current!.totalKey, d)
-    dataSourceMap.set(currentPage, newData)
     totalRef.current = totalPage
     setData(newData)
   }
@@ -134,13 +126,13 @@ const WcBaseTable: Model = ({
     composeRequest_ ? R.curryN(2, composeRequest_)(R.__, request_) : request_,
   )
 
-  const requestCatch = R.ifElse(
-    R.equals(setData),
-    toggleSpinning(false),
-    (e) => {
-      message.error(`${wcConfig.alias.tableErr}(${e.toString().match(/\d+/) || ''})`)
-    }
-  )
+  const requestCatchHandle = e => {
+    if (e === setData) return
+    setData(Wc.arr)
+    toggleSpinning(false)()
+    const errMsg = e.toString().match(/\d+/) || ''
+    message.error(`${wcConfig.alias.tableErr} ${errMsg ? `(${errMsg})` : ''}`)
+  }
 
   const request = Wc.asyncCompose(
     toggleSpinning(false),
@@ -148,12 +140,12 @@ const WcBaseTable: Model = ({
     R.ifElse(
       Wc.isObj,
       effectData,
-      () => setData(Wc.arr),
+      requestCatchHandle,
     ),
     composeRequest,
     mergePageParams({ size: pageSize, page: currentPage + defaultPage }),
     R.tap(toggleSpinning(true)),
-  ).catch(requestCatch)
+  ).catch(requestCatchHandle)
 
   const pagination: TablePaginationConfig | false = pagination_ === false ? false : {
     hideOnSinglePage: true,

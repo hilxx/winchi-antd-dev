@@ -9,7 +9,7 @@ const request = (config: AxiosRequestConfig) => axios({
   ...config,
   baseURL: '/api',
   headers: {
-    Authorization: 'bearer 6273f8df-dfe2-4d4f-9143-ac508b1393dd',
+    Authorization: 'bearer a3ab8679-0a48-4bbe-870a-29fa3b1fecf0',
   },
 })
 
@@ -182,7 +182,6 @@ export default () => {
   }, [])
 
   const composeRequest = ({ requestUrl, ...params }) => {
-
     return request({
       method: 'GET',
       url: requestUrl,
@@ -193,7 +192,6 @@ export default () => {
       },
     }).then(d => d.data.data)
   }
-
 
   return (
     <>

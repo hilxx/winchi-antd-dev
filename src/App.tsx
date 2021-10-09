@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useRef } from 'react'
 import { Button, ConfigProvider, Modal } from 'antd'
 import zhCN from 'antd/lib/locale/zh_CN'
-import Page from '@src/Page/Test'
+import Page from './Page/Test'
 import { hot } from 'react-hot-loader/root'
 import 'antd/dist/antd.css'
 import Wc, { R } from 'winchi'
@@ -26,7 +26,6 @@ let defaultAlias = {
 }
 
 let defaultConfig: WcConfig = {
- timeout: 7000,
  dataKey: 'data',
  totalKey: 'total',
  requestPageKey: 'page',

@@ -1,12 +1,12 @@
 import React from 'react'
-import WcHeadTable, { WcHeadTableProps, HeadActionRef } from './HeadTable'
+import WcHeadTable, { WcFilterTableProps, HeadActionRef } from './FilterTable'
 import { TableHandleKeys } from '@src/index'
 
 export type Handles<T extends AO = AO> = Partial<Record<TableHandleKeys, (row: T | T[]) => any>>
 
 export type ActionRef = HeadActionRef
 
-export type WcTableProps<T extends AO = AO> = WcHeadTableProps<T>
+export type WcTableProps<T extends AO = AO> = WcFilterTableProps<T>
 
 type Model = React.FC<WcTableProps>
 
@@ -25,7 +25,7 @@ const WcTable: Model = ({
 
 export default React.memo<Model>(WcTable)
 
-export * from './HeadTable'
+export * from './FilterTable'
 export * from './TypeTable'
 
 

@@ -3,7 +3,7 @@ import type { ImageProps, ButtonProps } from 'antd'
 import { Button, Divider, Space, Image } from 'antd'
 import Wc, { R } from 'winchi'
 import type { Columns, Methods, Alias } from '@src/d'
-import WcBaseTable, { WcBaseTableProps, BaseActionRef } from '../Base'
+import WcBaseTable, { WcHistoryTableProps, HistoryAtionRef } from '../HistoryTable'
 import { useWcConfig } from '@src/hooks'
 import { UseWcConfigRender } from '@src/App'
 import { propDataIndex } from '@src/utils'
@@ -21,12 +21,12 @@ export interface TableTypeCombineProps<T extends AO = AO> {
   getProps?(d: T): { wrapClassName?: string } & (ImageProps | ButtonProps | React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>)
 }
 
-export interface WcTypeTableProps<T extends AO = AO> extends WcBaseTableProps<T> {
+export interface WcTypeTableProps<T extends AO = AO> extends WcHistoryTableProps<T> {
   alias?: Alias
   methods?: Methods
   useDefaultColumns?: boolean
 }
-export type TypeActionRef = BaseActionRef
+export type TypeActionRef = HistoryAtionRef
 
 type Model = React.FC<WcTypeTableProps>
 

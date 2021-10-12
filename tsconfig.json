@@ -21,37 +21,19 @@
     "experimentalDecorators": true,
     "strict": true,
     "noImplicitAny": false,
-    "esModuleInterop": true,
     "paths": {
-      "@src/*": [
-        "./src/*"
-      ],
       "winchi": [
-        "./src/src"
+        "./winchi"
       ],
     }
   },
   "include": [
-    "mock/**/*",
-    "src/*",
-    "src/**/*",
-    "tests/**/*",
-    "test/**/*",
-    "__test__/**/*",
-    "typings/**/*",
-    "config/**/*",
-    ".eslintrc.js",
-    ".stylelintrc.js",
-    ".prettierrc.js",
-    "jest.config.js",
-    "mock/*"
+    "winchi-antd/*",
+    "winchi-antd/**/*",
+    "winchi/*",
   ],
   "exclude": [
     "node_modules",
     "build",
-    "dist",
-    "scripts",
-    "webpack",
-    "jest",
   ]
 }

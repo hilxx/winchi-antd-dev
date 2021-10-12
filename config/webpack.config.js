@@ -66,7 +66,7 @@ var getDevConfig = function (_a) {
                     port = _b.sent();
                     return [2 /*return*/, {
                             mode: 'development',
-                            entry: ['react-hot-loader/patch', './src/index.tsx'],
+                            entry: ['react-hot-loader/patch', './winchi-antd/Test.tsx'],
                             stats: 'errors-only',
                             devtool: 'inline-source-map',
                             devServer: {
@@ -169,8 +169,7 @@ exports["default"] = (function () { return __awaiter(void 0, void 0, void 0, fun
                         ], resolve: {
                             extensions: ['.js', '.ts', '.tsx'],
                             alias: {
-                                '@src': path_1["default"].resolve(__dirname, '../src'),
-                                'winchi': path_1["default"].resolve(__dirname, '../src/src/index.ts')
+                                'winchi': path_1["default"].resolve(__dirname, '../winchi/index.ts')
                             }
                         } })];
         }

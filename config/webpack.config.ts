@@ -15,7 +15,7 @@ const getDevConfig = async (
  const port = await portfinder.getPortPromise({ port: port_ })
  return {
   mode: 'development',
-  entry: ['react-hot-loader/patch', './src/index.tsx'],
+  entry: ['react-hot-loader/patch', './winchi-antd/Test.tsx'],
   stats: 'errors-only',
   devtool: 'inline-source-map',
   devServer: {
@@ -116,8 +116,7 @@ export default async (): Promise<WebpackConfig> => {
   resolve: {
    extensions: ['.js', '.ts', '.tsx'],
    alias: {
-    '@src': path.resolve(__dirname, '../src'),
-    'winchi': path.resolve(__dirname, '../src/src/index.ts')
+    'winchi': path.resolve(__dirname, '../winchi/index.ts')
    },
   },
  }

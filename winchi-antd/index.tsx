@@ -1,6 +1,11 @@
-export * from './d'
+export * from './d.d'
 export * from './App'
 export * from './hooks'
+export * from './Form'
+export * from './Menu'
+export * from './Page'
+export * from './Table'
+export * from './Upload'
 
 export { default as WcUpload } from './Upload'
 export { default as WcPage } from './Page'

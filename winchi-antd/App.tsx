@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useRef } from 'react'
-import { Button, Modal } from 'antd'
+import { Modal } from 'antd'
 import 'antd/dist/antd.css'
 import Wc, { R } from 'winchi'
 import type { WcConfig } from './d'
@@ -36,26 +36,26 @@ let defaultConfig: WcConfig = {
     x: 1200,
   },
   alias: defaultAlias,
-  columns: [
-    {
-      title: '更新时间',
-      dataIndex: 'updateTime',
-      hideForm: true,
-      render(d) {
-        const date = new Date(d)
-        return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`
-      }
-    },
-    {
-      title: '从出生那年就飘着',
-      dataIndex: '@handle',
-      xIndex: 9,
-      handles: {
-        onClickEdit: defaultAlias.edit,
-        onRemove: <Button type='link' style={{ padding: 0 }} danger>{defaultAlias.remove}</Button>,
-      }
-    }
-  ],
+  // columns: [
+  //   {
+  //     title: '更新时间',
+  //     dataIndex: 'updateTime',
+  //     hideForm: true,
+  //     render(d) {
+  //       const date = new Date(d)
+  //       return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`
+  //     }
+  //   },
+  //   {
+  //     title: '编辑',
+  //     dataIndex: '@handle',
+  //     xIndex: 9,
+  //     handles: {
+  //       onClickEdit: defaultAlias.edit,
+  //       onRemove: <Button type='link' style={{ padding: 0 }} danger>{defaultAlias.remove}</Button>,
+  //     }
+  //   }
+  // ],
   handlesMessage: {
     onRemoves: {
       loadingText: '正在删除',
@@ -87,8 +87,7 @@ let defaultConfig: WcConfig = {
       default: return f(params)
     }
   },
-  ModalWidth: 750,
-  upload: Wc.obj,
+  uploadConfig: Wc.obj,
 }
 
 const _effectDefaultAlias = R.curry(
@@ -102,14 +101,8 @@ const _effectDefaultConfig = newConfig => {
   defaultConfig = newConfig
 }
 
-const _uniqLeftColumns = (conf: WcConfig) => ({
-  ...conf,
-  columns: Wc.mergeArrayLeft(R.prop('dataIndex'), conf.columns),
-})
-
 const _setWcConfigHandle: AF = (oldConfig, handle: AF) => R.compose(
   handle,
-  _uniqLeftColumns,
   Wc.mergeDeepRight(oldConfig),
   _effectDefaultAlias(oldConfig),
 )
@@ -127,8 +120,10 @@ export const WcContext = createContext<WcContextValue>
     setWcConfig: _setWcConfigHandle(defaultConfig, _effectDefaultConfig),
   })
 
-export const WcConfigProvider: React.FC = ({ children }) => {
-  const [wcConfig, setWcConfig] = useState<WcConfig>(defaultConfig)
+export const WcProvider: React.FC<{ InitialConfig?: Partial<WcConfig> }> = ({
+  children
+}) => {
+  const [wcConfig, setWcConfig] = useState<WcConfig>(Wc.mergeDeepRight(defaultConfig, defaultConfig))
   const wcConfigRef = useRef<WcConfig>(wcConfig)
 
   const wcConfigChangeHandle = v => {

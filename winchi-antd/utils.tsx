@@ -38,6 +38,9 @@ export const processEnum: AF = (handle: AF<[AO, number]>) => async (c: Columns, 
 
 export const sortColumns = (arr: any[]) => Wc.sortByProp(v => propXIndex(v) || 0, arr)
 
+/**
+ * @description 动态隐藏column
+  */
 export const naughtyHideForm: AF = R.curry(
  (columns: Columns[], data: AO) => {
   let count = 0

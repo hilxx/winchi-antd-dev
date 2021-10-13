@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { message, Table } from 'antd'
 import { TableProps, TablePaginationConfig } from 'antd/lib/table'
 import { TableRowSelection } from 'antd/lib/table/interface'
-import { Columns } from '../d'
+import { Columns, Render } from '../d'
 import { useWcConfig } from '../hooks'
 import Wc, { R } from 'winchi'
 import { sortColumns } from '../utils'
@@ -34,7 +34,7 @@ export interface WcBaseTableProps<
   onSelectRowChange?(rows: T[], keys: Key[]): any
   preventFirtstRequest?: boolean
   /** 替代Table组件, 默认是 antd.Table */
-  children?(node: React.ComponentType<N>, nodeProps?: N): React.ReactElement
+  children?: Render
 }
 
 type Model = React.FC<WcBaseTableProps>

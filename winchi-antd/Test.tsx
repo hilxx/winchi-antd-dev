@@ -2,14 +2,14 @@ import { render } from 'react-dom'
 import { hot } from 'react-hot-loader/root'
 import { ConfigProvider } from 'antd'
 import zhCN from 'antd/lib/locale/zh_CN'
-import { WcConfigProvider } from './App'
+import { WcProvider } from './App'
 import Page from './Page/Test'
 
 const RenderApp = hot(
  () => <ConfigProvider locale={zhCN} >
-  <WcConfigProvider>
+  <WcProvider>
    <Page />
-  </WcConfigProvider>
+  </WcProvider>
  </ConfigProvider>
 )
 

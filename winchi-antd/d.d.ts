@@ -12,6 +12,8 @@ export interface LayoutSize {
   width?: string | number
 }
 
+export type Render = (node: React.ComponentType<N>, nodeProps?: N) => React.ReactElement
+
 export interface ColumnFormItemProps extends Omit<FormItemProps, 'label' | 'name' | 'initialValue'>, LayoutSize {
   width?: string | number
 }
@@ -60,16 +62,18 @@ export interface Columns<T extends AO = AO> extends ColumnProps<T> {
   formListProps?: ColumnFormListProps
   /** <Form.FormItem><FormComponent {...props}  /></Form.FormItem>  */
   formProps?: FormProps & LayoutSize
-  /** 
-   * @type (d: AO, index: Form.List第几项)
-    */
-  hideForm?: boolean | ((d: T, index?: number) => boolean)
   hideTable?: boolean
   hideDetail?: boolean
   /**
    * @description x轴顺序
     */
   xIndex?: number
+  /** 
+  * @type function 针对formList (d: AO, index: Form.List第几项)
+  */
+  hideForm?: boolean | ((d: T, index?: number) => boolean)
+  renderForm?: Render
+  formResult?: false | ((v: any) => any)
 }
 
 export interface LoadingText {
@@ -110,20 +114,16 @@ export interface WcConfig {
    */
   alias: Alias & AO
   /** 
-   * @key: 事件名
-   * @value: {column, loadingText: 开启后会成为loading提示文字}
-   * @description 新增column，出现在当前column的右边，事件调用props.handels
-   * */
-  columns: Columns[]
-  /** 
   * @key: 事件名
   * @value: interface  LoadingText
   * @description 触发改事件，触发相应Loading
   * */
   handlesMessage: Partial<Record<TableHandleKeys, LoadingText>> & AO
+  /** 
+   * @example 你确定要删除吗？
+    */
   handleClickBefore(name?: string | TableHandleKeys, fn: AF, args: any[]): any
-  ModalWidth: string | number,
-  upload: Omit<WcUploadProps, 'fileList'>
+  uploadConfig: Omit<WcUploadProps, 'fileList'>
 }
 
 export type Alias = typeof defaultAlias

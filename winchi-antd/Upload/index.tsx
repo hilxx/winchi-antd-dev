@@ -14,7 +14,7 @@ type Model = React.FC<WcUploadProps>
 const WcUpload: Model = (props_) => {
  const { wcConfig } = useWcConfig()
  const { ...props } = Wc.mergeLeft(props_, wcConfig.upload) as WcUploadProps
-
+ return <div>upload</div>
  return (
   <section className={styles.wrap}>
    <Upload {...props} />

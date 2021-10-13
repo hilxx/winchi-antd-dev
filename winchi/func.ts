@@ -7,7 +7,7 @@ export interface AsyncComposeReturn<D = any> {
   finally(cb: AF): AsyncComposeReturn<D>
 }
 
-const LOCKET = Symbol('locking')
+const _LOCKET = Symbol('locking')
 
 export const alt = (f1: AF, f2: AF) => (val?: any) => f1(val) || f2(val)
 
@@ -78,7 +78,7 @@ export const asyncCompose = <D = any>(...fns: AF[]): AsyncComposeReturn<D> => {
 export const lockWrap = <F extends AF<any[], Promise<any>>>(fn: F) =>
   async function lockFn_(...rest: ReturnParameters<F>
   ): Promise<ReturnType<F> extends any ? ReturnType<F> : Promise<ReturnType<F>>> {
-    lockFn_[LOCKET] = true
+    lockFn_[_LOCKET] = true
     try {
       const d = await fn(...rest)
       return d
@@ -86,13 +86,13 @@ export const lockWrap = <F extends AF<any[], Promise<any>>>(fn: F) =>
       console.error(`lockWrap.${fn.name}`, e)
       return Promise.reject(e)
     } finally {
-      lockFn_[LOCKET] = false
+      lockFn_[_LOCKET] = false
     }
   }
 
 export const callLock = <F extends AF>(fn: F) =>
   (...rest: ReturnParameters<F>): ReturnType<F> => {
-    const isLocket = fn[LOCKET]
+    const isLocket = fn[_LOCKET]
     return isLocket ? Promise.reject(`callLock.${fn.name}: 该函数已经在执行了`) : fn(...rest)
   }
 

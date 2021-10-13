@@ -22,7 +22,7 @@ export interface WcFormProps<T extends AO = AO>
   /** 
   * @description 二维数组，第一项为分布表单的第一页
    */
-  columns: Columns[] | Columns[][]
+  columns: Columns<T>[] | Columns<T>[][]
   /** 
    * @description 分布表单步骤标题
     */
@@ -45,8 +45,11 @@ export const WcFormContext = createContext<WcFormContextValue>({
   onValueChange: Wc.func,
 })
 
-export const filterFormColumns: AF = R.filter((c: Columns) =>
-  c.hideForm !== true && c.dataIndex != undefined && propFormType(c.formType)
+export const filterFormColumns: AF = R.compose(
+  R.filter((c: Columns) =>
+    c.hideForm !== true && c.dataIndex != undefined && propFormType(c.formType) !== undefined
+  ) as AF,
+  Wc.uniqueLeft(R.prop('dataIndex')),
 )
 
 const WcForm: Model = ({
@@ -66,7 +69,7 @@ const WcForm: Model = ({
   const [currentStep, setCurrentStep] = useState(0)
   const [initialValues, setInitialValues] = useState(Wc.obj)
   const formChangeDispatchMap = useMemo(() => new Map(), [])
-  const flatColumns = useMemo(() => columns.flat(), [columns])
+  const flatColumns = useMemo<Columns[]>(() => columns.flat(), [columns])
   const formRef = useRef<FormRef>(null)
   const alias = new Proxy(alias_, {
     get(target, key) {
@@ -93,7 +96,7 @@ const WcForm: Model = ({
     formRefArr.forEach(actRef => (actRef as any).current = action)
   })
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  /* process columns */
   useEffect(R.compose(
     setColumns,
     R.map(R.compose(
@@ -106,13 +109,13 @@ const WcForm: Model = ({
   ), [columns_])
 
   useEffect(() => {
-    initialValues_ && setInitialValues(
-      flatColumns.reduce((r, c) => c.initialValue ? {
-        ...r,
-        [c.dataIndex as any]: c.initialValue
-      } : r, initialValues_)
-    )
-  }, [flatColumns, initialValues_])
+    const newInitV = flatColumns.reduce((r, c) => c.initialValue ? {
+      ...r,
+      [c.dataIndex as any]: c.initialValue
+    } : r, initialValues_ || {})
+
+    JSON.stringify(newInitV) !== JSON.stringify(initialValues) && setInitialValues(newInitV)
+  }, [flatColumns])
 
   useEffect(() => {
     formRef.current?.setFieldsValue(initialValues)
@@ -121,7 +124,7 @@ const WcForm: Model = ({
 
   const steps = useMemo(() => steps_?.slice(0, columns.length), [steps_, columns])
 
-  const stepMaxNum = columns.length - 1
+  const stepMaxNum = columns.length
 
   const propInitialValues: AF = R.prop(R.__, initialValues)
 
@@ -137,7 +140,14 @@ const WcForm: Model = ({
 
   const submitHandle = Wc.asyncCompose(
     async () => {
-      const vs = formRef.current?.getFieldsValue()
+      const vs = flatColumns.reduce((r, c) => {
+        const key = c.dataIndex as any
+        if (Reflect.has(c, key) && typeof c.formResult === 'function')
+          r[key] = c.formResult(r[key])
+
+        c.formResult === false && Reflect.deleteProperty(r, key)
+        return r
+      }, formRef.current?.getFieldsValue())
       await onSubmit?.(vs, initialValues)
     },
     submitBefore,
@@ -148,7 +158,7 @@ const WcForm: Model = ({
   })
 
   const clickNextHandle = Wc.asyncCompose(
-    () => currentStep + 1 < stepMaxNum ? setCurrentStep(currentStep + 1) : submitHandle(),
+    () => currentStep < stepMaxNum ? setCurrentStep(currentStep + 1) : submitHandle(),
     checkValidata,
   )
 
@@ -226,7 +236,7 @@ const WcForm: Model = ({
             )
             : null
         }
-        <Divider dashed />
+        <Divider className={styles.divider} dashed />
         <Form
           initialValues={initialValues}
           ref={formRef}
@@ -237,7 +247,7 @@ const WcForm: Model = ({
           {formItemJSX}
           <button type='submit' style={{ display: 'none' }} />
         </Form>
-        <Divider dashed />
+        <Divider className={styles.divider} dashed />
         {footerJSX}
       </main>
     </WcFormContext.Provider >

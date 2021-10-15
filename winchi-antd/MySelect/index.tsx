@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import type { SelectProps } from 'antd/lib/select';
-import Wc from 'winchi'
+import Wc from 'winchi';
 import { Select } from 'antd';
 
 export interface MySelectProps extends SelectProps<any> {

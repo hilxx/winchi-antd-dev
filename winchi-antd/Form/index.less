@@ -1,39 +1,39 @@
 @import '../App.less';
 
 .form {
- .scroll-bar();
- 
- max-height: 70vh;
- display   : flex;
- flex-wrap : wrap;
- overflow-y: auto;
- transition: .25s linear;
- gap       : @margin-sm;
+  .scroll-bar();
+  display: flex;
+  flex-wrap: wrap;
+  gap: @margin-sm;
+
+  max-height: 70vh;
+  overflow-y: auto;
+  transition: 0.25s linear;
 }
 
 .title {
- font-size: 1.4rem;
+  font-size: 1.4rem;
 }
 
 .footer {
- display        : flex;
- justify-content: space-between;
- gap            : @margin-sm;
+  display: flex;
+  gap: @margin-sm;
+  justify-content: space-between;
 
- @media (max-width: 600px) {
-  width          : 100%;
-  justify-content: flex-end;
- }
+  @media (max-width: 600px) {
+    justify-content: flex-end;
+    width: 100%;
+  }
 }
 
 .form-ele {
- width: 48%;
+  width: 48%;
 
- @media (max-width: 600px) {
-  width: 100%;
- }
+  @media (max-width: 600px) {
+    width: 100%;
+  }
 }
 
 .divider {
- margin: @margin-xs;
+  margin: @margin-xs;
 }

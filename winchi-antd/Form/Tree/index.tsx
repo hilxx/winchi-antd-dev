@@ -1,51 +1,54 @@
-import React, { useEffect, useState } from 'react'
-import type { TreeProps } from 'antd/lib/tree'
-import { Tree } from 'antd'
-import Wc from 'winchi'
-import styles from './index.less'
+import React, { useEffect, useState } from 'react';
+import type { TreeProps } from 'antd/lib/tree';
+import { Tree } from 'antd';
+import styles from './index.less';
 
-export interface WcTreeProps extends TreeProps {
- request?: AF<any[], Promise<any>>
- onChange?: AF
- value?: any[]
+export interface MyTreeProps extends TreeProps {
+  request?: AF<any[], Promise<any>>;
+  onChange?: AF;
+  value?: any;
 }
 
-type Model = React.FC<WcTreeProps>
+type Model = React.FC<MyTreeProps>;
 
-const WcTree: Model = props => {
- const {
-  request,
-  treeData: treeData_,
-  onChange,
-  onCheck,
-  checkable = true,
-  value = Wc.arr,
-  className = '',
-  ...restProps
- } = props
- const [treeData, setTreeData] = useState(treeData_)
+const MyTree: Model = (props) => {
+  const {
+    request,
+    value,
+    treeData: treeData_,
+    onChange,
+    onCheck,
+    checkable = true,
+    className = '',
+    ...restProps
+  } = props;
+  const [treeData, setTreeData] = useState(treeData_);
 
- useEffect(() => {
-  request ? request().then(setTreeData) : setTreeData(treeData_)
- }, [treeData_, request])
+  useEffect(() => {
+    treeData_ && setTreeData(treeData_);
+  }, [treeData_]);
 
- const checkHandle: TreeProps['onCheck'] = (keys, ...rest) => {
-  onChange?.(keys, ...rest)
-  onCheck?.(keys, ...rest)
- }
+  useEffect(() => {
+    request?.().then(setTreeData);
+  }, [request]);
 
- return (
-  <Tree
-   className={`${styles.wrap} ${className}`}
-   checkable={checkable}
-   autoExpandParent
-   defaultExpandAll
-   {...restProps}
-   onCheck={checkHandle}
-   treeData={treeData}
-   checkedKeys={Array.isArray(value) ? value : [value]}
-  />
- )
-}
+  const checkHandle: TreeProps['onCheck'] = (keys, ...rest) => {
+    onChange?.(keys, ...rest);
+    onCheck?.(keys, ...rest);
+  };
 
-export default React.memo<Model>(WcTree)
+  return (
+    <Tree
+      className={`${styles.wrap} ${className}`}
+      autoExpandParent
+      defaultExpandAll
+      {...restProps}
+      checkable={checkable}
+      onCheck={checkHandle}
+      treeData={treeData}
+      checkedKeys={value}
+    />
+  );
+};
+
+export default React.memo<Model>(MyTree);

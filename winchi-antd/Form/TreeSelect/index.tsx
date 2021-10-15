@@ -1,27 +1,28 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { TreeSelectProps } from 'antd/lib/tree-select';
 import { Spin, TreeSelect } from 'antd';
+import { stringToIds } from '@/utils/async';
 import styles from './index.less';
 
 const { TreeNode } = TreeSelect;
 
-export interface WcTreeSelectDataItem {
+export interface MyTreeSelectDataItem {
   id: string | number;
   title: string;
-  children?: WcTreeSelectDataItem[];
+  children?: MyTreeSelectDataItem[];
 }
 
-export interface WcTreeSelectProps extends TreeSelectProps<any> {
-  request?: () => Promise<WcTreeSelectDataItem[]>;
-  data?: WcTreeSelectDataItem[];
+export interface MyTreeSelectProps extends TreeSelectProps<any> {
+  request?: () => Promise<MyTreeSelectDataItem[]>;
+  data?: MyTreeSelectDataItem[];
 }
 
-type Model = React.FC<WcTreeSelectProps>;
+type Model = React.FC<MyTreeSelectProps>;
 
-const WcTreeSelect: Model = (props) => {
-  const { data, request, value: value_, multiple, onChange, ...restProps } = props;
+const MyTreeSelect: Model = (props) => {
+  const { data, request, value: value__, multiple, onChange, ...restProps } = props;
   const [value, setValue] = useState<string[]>([]);
-  const [renderData, setRenderData] = useState<WcTreeSelectDataItem[]>([]);
+  const [renderData, setRenderData] = useState<MyTreeSelectDataItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -29,8 +30,8 @@ const WcTreeSelect: Model = (props) => {
   }, [data]);
 
   useEffect(() => {
-    value_ && setValue(value_);
-  }, [value_]);
+    value__ && setValue(typeof value__ === 'string' ? stringToIds(value__) : value__);
+  }, [value__]);
 
   useEffect(() => {
     request && setLoading(true);
@@ -71,9 +72,9 @@ const WcTreeSelect: Model = (props) => {
   );
 };
 
-export default React.memo<Model>(WcTreeSelect);
+export default React.memo<Model>(MyTreeSelect);
 
-const renderTreeNode = (data: WcTreeSelectDataItem) => (
+const renderTreeNode = (data: MyTreeSelectDataItem) => (
   <TreeNode key={data.id} value={data.id} title={data.title}>
     {data.children ? data.children.map((item) => renderTreeNode(item)) : null}
   </TreeNode>

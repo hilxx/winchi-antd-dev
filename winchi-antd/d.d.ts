@@ -2,71 +2,74 @@ import type { OptionProps } from 'antd/lib/select';
 import type { ColumnProps } from 'antd/lib/table';
 import type { FormItemProps, FormListProps } from 'antd/lib/form';
 import type { FormProps, FormType } from './Form';
-import type { TableType } from './Table/TypeTable';
+import type { TableType, ComposeFormProps } from './Table';
 import type { WcUploadProps } from './Upload';
 import { defaultAlias } from './App';
-
-export type Size = Exclude<SizeType, void>;
 
 export interface LayoutSize {
   width?: string | number;
 }
 
-export type Render<N extends AO = any> = (
-  node: React.ComponentType<N>,
-  nodeProps?: N,
-) => React.ReactElement;
-
 export interface ColumnFormItemProps
   extends Omit<FormItemProps, 'label' | 'name' | 'initialValue'>,
-  LayoutSize {
+    LayoutSize {
   width?: string | number;
 }
 
 export interface ColumnFormListProps
   extends Omit<FormListProps, 'label' | 'name' | 'initialValue' | 'children'>,
-  LayoutSize {
+    LayoutSize {
   columns: Columns[];
 }
 
-export type ColumnsEnum = Record<string | number, React.ReactNode> | OptionProps[];
+export type ColumnEnum = Record<string | number, React.ReactNode> | OptionProps[];
 
-export interface Columns<T extends AO = AO> extends ColumnProps<T> {
-  initialValue?: any | ((record: T) => any);
-  /** @description 开启顶栏搜索 */
-  search?: boolean;
+export interface Columns<T extends AO = any> extends ColumnProps<T> {
+  /** @description 开启过滤 */
+  filter?: {
+    /** 覆盖../formType */
+    type?: FormType;
+    /** 占据宽度 */
+    width?: string;
+  };
   /** @description column.render的返回值*/
-  fetchRenderValue?(record: T): React.ReactNode;
+  renderValue?(formItemValue: any, record: T): any;
   /**
    * @用作展示：优先级高于alias
    * @用作表单：优先级低于formProps.options
    */
-  enum?: ColumnsEnum | AF<any[], Promise<ColumnsEnum>> | AxiosPromise<ColumnsEnum>;
-  tableType?: TableType | TableType[];
+  enum?: ColumnEnum | AF<any[], Promise<ColumnEnum>> | AxiosPromise<ColumnEnum>;
   /** @type [compose的顺序，从后到前] */
-  formType?: FormType | FormType[];
-  /** @description <Form.FormItem {...props} /> */
-  formItemProps?: ColumnFormItemProps;
-  formListProps?: ColumnFormListProps;
+  tableType?: TableType<T> | TableType<T>[];
   /** <Form.FormItem><FormComponent {...props}  /></Form.FormItem>  */
   formProps?: FormProps & LayoutSize;
   hideTable?: boolean;
   hideDetail?: boolean;
   /** @description x轴顺序 */
   xIndex?: number;
-  /** @type function 针对formList (d: AO, index: Form.List第几项) */
-  hideForm?: boolean | ((d: T, index?: number) => boolean);
-  renderForm?: Render;
+  initialValue?: any | ((formItemValue: any, record: T) => any);
+  /** @description <Form.FormItem {...props} /> */
+  formItemProps?: ColumnFormItemProps;
+  formListProps?: ColumnFormListProps;
+  formType?: FormType;
+  hideForm?: boolean;
   formResult?: false | ((formItemValue: any, formValues: any) => any);
+  renderForm?: AF<Parameters<Render>, React.ReactNode>;
+  /**
+   * @params2 针对formList (d: AO, index: Form.List第几项)
+   * @returns 返回的结果浅复制当前Column
+   * */
+  dynamicColumn?(d: T, index?: number): Columns<T>;
 }
 
 export interface WcConfig {
-  /** @description 当前table 设置紧凑程度 */
-  size?: Size;
-  /** @description {[default TopTabKey]: value} */
-  /** @description 默认别名 */
-  alias: Alias & AO;
-  uploadConfig: Omit<WcUploadProps, 'fileList'>;
+  size?: 'small' | 'middle' | 'large';
+  modalWidth?: number | string;
+  queryProps?: ComposeFormProps['queryProps'];
 }
 
-export type Alias = typeof defaultAlias;
+export interface FormComponentProps {
+  onChange?(v): any;
+  value?: any;
+  [x: string]: any;
+}

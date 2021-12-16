@@ -1,26 +1,25 @@
-import React, { createContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { debounce } from 'lodash';
 import type { FormInstance } from 'antd';
-import { Form, Button, Steps, Divider } from 'antd';
-import { LoadingOutlined } from '@ant-design/icons';
+import { Form, Button, Divider } from 'antd';
 import Wc, { R } from 'winchi';
-import type { Columns, Alias } from '../d';
+import type { Columns } from '../d';
 import { useWcConfig } from '../hooks';
-import { propFormType } from './formType';
 import ResolveChidren from './ResolveChidren';
 import styles from './index.less';
-import { sortColumns, naughtyHideForm } from '../utils';
+import { sortColumns, dynamicForm } from '../utils';
 
 export interface FormRef extends FormInstance {
   toggleSubmitLoading(b: boolean): any;
   resetForm(values?: AO): any;
-  setValues(values: AO): any;
-  getIntialValues(): AO | void
+  setInitialValues(values: AO): any;
+  getInitialValues(): AO;
 }
 
-export interface WcFormProps<T extends AO = AO>
+export interface WcFormProps<T extends AO = any>
   extends Omit<
-  React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>,
-  'onSubmit'
+    React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>,
+    'onSubmit'
   > {
   /**
    * @description 二维数组，第一项为分布表单的第一页
@@ -31,126 +30,127 @@ export interface WcFormProps<T extends AO = AO>
    */
   steps?: string[];
   onSubmit?(data: T, defaultData?: T): any;
-  onReset?(): any;
   formRef?: React.RefObject<FormRef | undefined> | React.RefObject<FormRef | undefined>[];
-  alias?: Alias;
+  hideSubmit?: boolean;
+  onValuesChange?(values: T): any;
 }
 
 export interface WcFormContextValue {
-  setLoading: AF;
-  onValueChange(dataIndex: any, f: AF): any;
+  toggleLoading: AF;
+  onValuesChange(dataIndex: any, f: AF): any;
+  initialValues: AO;
 }
 
 type Model = React.FC<WcFormProps>;
 
 export const WcFormContext = createContext<WcFormContextValue>({
-  setLoading: Wc.func,
-  onValueChange: Wc.func,
+  toggleLoading: Wc.func,
+  onValuesChange: Wc.func,
+  initialValues: Wc.obj,
 });
 
 export const filterFormColumns: AF = R.compose(
-  R.filter(
-    (c: Columns) =>
-      c.hideForm !== true && c.dataIndex != undefined && propFormType(c.formType) !== undefined,
-  ) as AF,
   Wc.uniqueLeft(R.prop('dataIndex')),
+  R.filter((d: Columns) => d.hideForm !== true),
 );
 
-const WcForm: Model = ({
+const WcForm_: Model = ({
   columns: columns_ = Wc.arr,
-  steps: steps_,
+  steps,
   onSubmit,
   className = '',
+  onValuesChange: onValuesChange_,
   formRef: formRef_ = {},
-  alias: alias_ = Wc.obj,
-  onReset = Wc.func,
+  hideSubmit,
   ...props
 }) => {
+  const columnsArr = useMemo(
+    () => columns_.map((d) => (Array.isArray(d) ? d : [d])).filter((d) => d?.length),
+    [columns_],
+  );
   const { wcConfig } = useWcConfig();
   const [loading, setLoading] = useState(false);
-  const [columns, setColumns] = useState(Wc.arr);
+  const [columns, setColumns] = useState<AO[]>(Wc.arr);
   const [currentStep, setCurrentStep] = useState(0);
   const [initialValues, setInitialValues] = useState(Wc.obj);
 
   const formChangeDispatchMap = useMemo(() => new Map(), []);
-  const flatColumns = useMemo<Columns[]>(() => columns.flat(), [columns]);
+  const flatColumnsRef = useRef<Columns[]>(Wc.arr);
   const formRef = useRef<FormRef>(null);
-  const alias = new Proxy(alias_, {
-    get(target, key) {
-      return Reflect.get(Reflect.has(target, key) ? target : wcConfig.alias, key);
-    },
-  });
+  const isResetFormEffect = useRef<boolean>(true);
 
   useEffect(() => {
     const action: Partial<FormRef> = {
-      ...formRef.current || Wc.obj,
+      ...(formRef.current || Wc.obj),
       toggleSubmitLoading(bool) {
         setLoading(bool);
       },
       resetForm(values) {
         setCurrentStep(0);
-        setInitialValues(
-          values ? _computeInitValues(flatColumns, values) : {}
-        )
+        initalValuesEffect(columnsArr, values);
       },
-      setValues: setInitialValues,
-      getIntialValues: () => Wc.isEmptyObj(initialValues) ? undefined : initialValues,
+      setInitialValues: initalValuesEffect,
+      getInitialValues: () => initialValues,
     };
-    const formRefArr = (Array.isArray(formRef_) ? formRef_ : [formRef_]).concat(formRef);
+    const formRefArr = (Array.isArray(formRef_) ? formRef_.flat() : [formRef_]).concat(formRef);
     formRefArr.forEach((actRef) => ((actRef as any).current = action));
   });
-
-  /* process columns */
-  useEffect(
-    R.compose(
-      setColumns,
-      R.map(
-        R.compose(
-          sortColumns,
-          naughtyHideForm(R.__, formRef.current?.getFieldsValue() || initialValues),
-        ),
-      ),
-      R.filter(Wc.propLength) as AF,
-      R.map(filterFormColumns),
-      Wc.idendify(columns_[0] && !Array.isArray(columns_[0]) ? [columns_] : columns_),
-    ),
-    [columns_],
-  );
-
-  useEffect(() => {
-    formRef.current?.setFieldsValue(initialValues);
-    initialValues !== Wc.obj && formValueDispatch(initialValues);
-  }, [initialValues]);
-
-  const steps = useMemo(() => steps_?.slice(0, columns.length), [steps_, columns]);
-
-  const stepMaxNum = columns.length - 1;
-
-  const propInitialValues: AF = R.prop(R.__, initialValues);
-
-  const checkValidata = () =>
-    formRef.current?.validateFields(columns[currentStep]?.map(R.prop('dataIndex') as AF));
 
   /** 向子组件抛出 formValueChange */
   const formChangeDispatch = (d) =>
     Array.from(formChangeDispatchMap.values()).forEach((f) => f?.(d));
 
+  const valuesEffectColumns = R.curry((ccs, values) =>
+    R.compose(
+      setColumns,
+      _processColumns(ccs),
+      R.tap(Wc.debounce(100, formChangeDispatch)),
+    )(values),
+  );
+
+  const initalValuesEffect: AF = (ccs: any[], values: AO = Wc.obj) => {
+    const newInitialValues = _computeinitialValues((flatColumnsRef.current = ccs.flat()), values);
+    setCurrentStep(0);
+    setInitialValues(newInitialValues);
+    valuesEffectColumns(ccs, newInitialValues);
+    isResetFormEffect.current = true;
+    setTimeout(() => {
+      formRef.current?.setFieldsValue(newInitialValues);
+    });
+  };
+
+  /* process columns */
+  useEffect(() => {
+    initalValuesEffect(columnsArr, Wc.obj);
+  }, [columnsArr]);
+
+  const stepMaxNum = columns.length - 1;
+
+  const checkValidata = () =>
+    formRef.current?.validateFields(columns[currentStep]?.map(R.prop('dataIndex') as AF));
+
   const submitBefore = Wc.asyncCompose(checkValidata, () => setLoading(true));
 
-  const submitHandle = Wc.asyncCompose(async () => {
-    const vs = flatColumns.reduce((r, c) => {
-      const key = c.dataIndex as any;
-      if (Reflect.has(c, key) && typeof c.formResult === 'function')
-        r[key] = c.formResult(r[key], r);
+  const onValuesChange = useCallback(
+    debounce((_, values) => {
+      isResetFormEffect.current || valuesEffectColumns(columnsArr, values);
+      isResetFormEffect.current = false;
+      onValuesChange_?.(values);
+    }, 200),
+    [columnsArr],
+  );
 
+  const submitHandle = Wc.asyncCompose(async () => {
+    const vs = flatColumnsRef.current.reduce((r, c) => {
+      const key = c.dataIndex + '';
+      if (typeof c.formResult === 'function') r[key] = c.formResult(r[key], r);
       c.formResult === false && Reflect.deleteProperty(r, key);
       return r;
     }, formRef.current?.getFieldsValue());
-
     await onSubmit?.(vs, initialValues);
   }, submitBefore)
     .catch((err) => {
-      console.log(`form submiting`, err);
+      console.error(`form submit`, err);
     })
     .finally(() => {
       setLoading(false);
@@ -162,8 +162,7 @@ const WcForm: Model = ({
   );
 
   const clickResetHandle = () => {
-    formRef.current?.resetForm();
-    onReset();
+    formRef.current?.resetForm({});
   };
 
   const formSubmitCatureHandle = (e) => {
@@ -171,33 +170,20 @@ const WcForm: Model = ({
     clickNextHandle();
   };
 
-  const formValueDispatch = R.compose(
-    Wc.debounce(100, R.compose(setColumns, Wc.setArr(columns, currentStep))),
-    naughtyHideForm(columns[currentStep]),
-    R.tap(Wc.debounce(100, formChangeDispatch)),
-  );
-
   const formItemJSX = columns.map((cc, index) =>
-    cc.map((c) => (
-      <ResolveChidren
-        key={`${c.dataIndex}`}
-        {...c}
-        hide={index !== currentStep}
-        wcInitVal={propInitialValues(c.dataIndex)}
-        initialValues={initialValues}
-      />
+    cc.map((c: Columns) => (
+      <ResolveChidren key={`${c.dataIndex}`} {...c} hide={index !== currentStep} />
     )),
   );
-
   const footerJSX = columns[currentStep]?.length ? (
     <footer className={styles.footer}>
       <Button size={wcConfig.size} onClick={clickResetHandle}>
-        {alias.reset}
+        重置
       </Button>
       <section>
         {stepMaxNum && currentStep ? (
           <Button size={wcConfig.size} onClick={() => setCurrentStep(currentStep - 1)}>
-            {alias.lastStep}
+            上一步
           </Button>
         ) : null}
         <Button
@@ -206,7 +192,7 @@ const WcForm: Model = ({
           onClick={clickNextHandle}
           type="primary"
         >
-          {currentStep === stepMaxNum ? alias.submit : alias.nextStep}
+          {currentStep === stepMaxNum ? '提交' : '下一步'}
         </Button>
       </section>
     </footer>
@@ -215,54 +201,66 @@ const WcForm: Model = ({
   return (
     <WcFormContext.Provider
       value={{
-        setLoading,
-        onValueChange(dataIndex, f) {
+        toggleLoading: setLoading,
+        onValuesChange(dataIndex, f) {
           formChangeDispatchMap.set(dataIndex, f);
         },
+        initialValues,
       }}
     >
-      <main {...props} className={`${styles.wrap} ${className}`}>
-        {steps ? (
-          <Steps>
-            {steps.map((s, index) => (
-              <Steps.Step
-                key={s}
-                title={s}
-                icon={index === currentStep && loading ? <LoadingOutlined /> : undefined}
-              />
-            ))}
-          </Steps>
+      <main {...props} className={`${className}`}>
+        {columnsArr.length > 1 ? (
+          <header className={styles.header}>
+            <span>
+              <strong className={styles['current-step']}>{currentStep + 1}</strong> /{' '}
+              {columnsArr.length}
+            </span>
+            <span className={styles['header-title']}>{steps?.[currentStep]}</span>
+            <span />
+          </header>
         ) : null}
-        <Divider className={styles.divider} dashed />
+
+        {hideSubmit ? null : <Divider className={styles.divider} dashed />}
         <Form
-          initialValues={initialValues}
           ref={formRef}
           className={styles.form}
-          onValuesChange={R.flip(formValueDispatch)}
+          onValuesChange={onValuesChange}
           onSubmitCapture={formSubmitCatureHandle}
         >
           {formItemJSX}
           <button type="submit" style={{ display: 'none' }} />
         </Form>
-        <Divider className={styles.divider} dashed />
-        {footerJSX}
+
+        {hideSubmit ? null : <Divider className={styles.divider} dashed />}
+
+        {hideSubmit ? null : footerJSX}
       </main>
     </WcFormContext.Provider>
   );
 };
 
-export default React.memo<Model>(WcForm);
+export const WcForm: Model = React.memo(WcForm_);
+export default WcForm;
 
-const _computeInitValues = (columns: Columns[], values: AO = {}) =>
-  columns.reduce(
-    (r, c) => {
-      const dataIndex = c.dataIndex as any
-      const v = r[dataIndex] ?? c.initialValue
-      const newR = {
-        ...r,
-        [dataIndex]: v,
-      }
-      newR[dataIndex] = typeof c.initialValue === 'function' ? c.initialValue(newR) : v
-      return newR
-    }, values
-  )
+const _computeinitialValues = R.curry((columns: Columns[], values: AO) => ({
+  ...values,
+  ...columns.reduce((r, c) => {
+    const dataIndex = c.dataIndex + '';
+    const dataIndexValue = r[dataIndex] ?? c.initialValue;
+    const newR = {
+      ...r,
+      [dataIndex]: dataIndexValue,
+    };
+    newR[dataIndex] =
+      typeof c.initialValue === 'function' ? c.initialValue(r[dataIndex], newR) : dataIndexValue;
+    return newR;
+  }, values ?? Wc.obj),
+}));
+
+const _processColumns = R.curry((columns, values) =>
+  R.compose(R.map(sortColumns), R.filter(Wc.propLength) as AF, R.map(filterFormColumns), (values) =>
+    columns.map(dynamicForm(R.__, values)),
+  )(values),
+);
+
+export * from './formType';

@@ -11,19 +11,18 @@ export type WcFormItemProps<T extends AO = AO> = Columns<T> & WcResolveChidrenPr
 
 type Model = React.FC<WcFormItemProps>;
 
-const WcFormItem: Model = (props) => {
+const WcFormItem_: Model = (props) => {
   const {
     dataIndex,
     title,
+    hide,
     formType,
     formItemProps: { width, className = '', style = Wc.obj, ...formItemProps } = Wc.obj,
-    formProps = {},
-    hide,
-    wcInitVal,
-    initialValues,
+    formProps = Wc.obj,
   } = props;
   const { wcConfig } = useWcConfig();
   const C = propFormType(formType);
+
   return (
     <Form.Item
       key={`${dataIndex}`}
@@ -38,10 +37,8 @@ const WcFormItem: Model = (props) => {
       }}
     >
       <C
-        wcInitVal={wcInitVal}
         size={wcConfig.size}
         {...formProps}
-        initialValues={initialValues}
         style={{ width: formProps.width, ...(formProps.style || Wc.obj) }}
         column={props}
       />
@@ -49,4 +46,5 @@ const WcFormItem: Model = (props) => {
   );
 };
 
-export default React.memo<Model>(WcFormItem);
+export const WcFormItem = React.memo<Model>(WcFormItem_);
+export default WcFormItem

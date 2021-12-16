@@ -1,5 +1,8 @@
 import { AO } from '.';
 
+export const isExtendObj = (o): o is AO =>
+  (!!o && typeof o === 'object') || typeof o === 'function';
+
 export const isObj = (o): o is AO =>
   Reflect.apply(Object.prototype.toString, o, []) === '[object Object]';
 

@@ -1,17 +1,21 @@
 import React, { useContext, useEffect, useState } from 'react';
-import type { InputProps, InputNumberProps, RadioProps, SelectProps } from 'antd';
-import { Radio, Input, InputNumber, Select } from 'antd';
+import type { InputProps, InputNumberProps, RadioProps, SelectProps, DatePickerProps } from 'antd';
+import { Radio, Input, InputNumber, Select, DatePicker } from 'antd';
 import Wc from 'winchi';
-import { Columns } from '../d';
+import { composeComponent } from 'winchi/jsx';
+import { Columns, FormComponentProps } from '../d';
 import { WcFormContext } from './';
 import { defaultRender } from '../utils';
-import FormTable, { WcFormTableProps } from '../Table/FormTable';
-import WcUpload from './Upload';
+import type { ComposeFormProps } from '../Table';
+import { ComposeHistory, ComposeQuery, ComposeForm } from '../Table';
+import WcUpload, { WcUploadProps } from './Upload';
 import WcFormList from './List';
-import WcTreeSelect from './TreeSelect';
-import WcTree from './Tree';
+import WcTreeSelect, { wCTreeSelectProps } from './TreeSelect';
+import WcTree, { WcTreeProps } from './Tree';
 
 const { TextArea } = Input;
+
+const FormTable = (props) => composeComponent(ComposeQuery, ComposeForm, ComposeHistory)(props);
 
 export type FormType =
   | 'text'
@@ -23,14 +27,21 @@ export type FormType =
   | 'table'
   | 'list'
   | 'tree'
-  | 'treeSelect';
+  | 'treeSelect'
+  | 'password'
+  | 'datePicker'
+  | 'dateRangePicker';
 
 export type FormProps =
   | InputProps
   | InputNumberProps
   | RadioProps
   | SelectProps<any>
-  | WcFormTableProps;
+  | ComposeFormProps
+  | WcUploadProps
+  | WcTreeProps
+  | wCTreeSelectProps
+  | DatePickerProps;
 
 const mapFC: Record<FormType, AF> = {
   text(props: any) {
@@ -39,6 +50,15 @@ const mapFC: Record<FormType, AF> = {
   textArea(props: any) {
     return (
       <FormComponentWrap {...props} onChangeComputeValue={propEventValue} Component={TextArea} />
+    );
+  },
+  password(props) {
+    return (
+      <FormComponentWrap
+        {...props}
+        onChangeComputeValue={propEventValue}
+        Component={Input.Password}
+      />
     );
   },
   number(props: any) {
@@ -59,11 +79,11 @@ const mapFC: Record<FormType, AF> = {
     );
   },
   table(props: any) {
-    const { setLoading } = useContext(WcFormContext);
+    const { toggleLoading } = useContext(WcFormContext);
     return (
       <FormComponentWrap
         {...props}
-        onLoading={Wc.sep(setLoading, props?.onLoading || Wc.func)}
+        onLoading={Wc.sep(toggleLoading, props?.onLoading || Wc.func)}
         Component={FormTable}
       />
     );
@@ -80,57 +100,60 @@ const mapFC: Record<FormType, AF> = {
   treeSelect(props) {
     return <FormComponentWrap {...props} Component={WcTreeSelect} />;
   },
+  datePicker(props) {
+    return <FormComponentWrap {...props} Component={DatePicker} />;
+  },
+  dateRangePicker(props) {
+    return <FormComponentWrap {...props} Component={DatePicker.RangePicker} />;
+  },
 };
 
 export const propEventValue = (e?) => e?.target?.value;
 
-export const propFormType = (key: FormType = 'text'): React.FC<FormComponentWrapProps> =>
-  mapFC[key];
+export const propFormType = (
+  key: FormType = 'text',
+): React.FC<Omit<FormComponentWrapProps, 'Components'>> => mapFC[key];
 
-export interface FormComponentWrapProps {
+export interface FormComponentWrapProps extends React.DetailedHTMLProps<any, any> {
   onChange: AF;
-  Component: React.ComponentType<AO>;
-  wcInitVal: any;
-  /** 依赖它来更新value，如果wcInitVal一直为undefined则无法二次触发useEffect  */
-  initialValues: AO;
   onChangeComputeValue?: AF;
   column: Columns;
+  Component: React.ComponentType<AO>;
 }
 
 const FormComponentWrap: React.FC<FormComponentWrapProps> = ({
-  wcInitVal,
   onChange = Wc.func,
   Component,
   onChangeComputeValue,
-  initialValues,
   column,
   ...props
 }) => {
   const [value, setValue] = useState<any>();
+  const { initialValues } = useContext(WcFormContext);
 
   useEffect(() => {
-    if (wcInitVal === value) return;
-    setValue(wcInitVal);
-    onChange(wcInitVal);
-  }, [wcInitVal, initialValues]);
+    const initialValue = initialValues[column.dataIndex + ''];
+    if (initialValue === value) return;
+    setValue(initialValue);
+    onChange(initialValue);
+  }, [initialValues]);
 
   const changeHandle = (...rest) => {
     const newV = onChangeComputeValue?.(...rest) ?? rest[0];
     if (newV === value) return;
-    if (Array.isArray(newV) && Array.isArray(value) && newV.toString() === value.toString()) return;
     setValue(newV);
     onChange?.(...[newV, rest.slice(1)]);
   };
 
   const { renderForm = defaultRender } = column;
 
-  const renderProps = {
+  const renderProps: FormComponentProps = {
     ...props,
     value,
     onChange: changeHandle,
   };
 
-  return renderForm(Component, renderProps);
+  return renderForm(Component, renderProps) as any;
 };
 
 export default mapFC;

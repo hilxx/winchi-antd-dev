@@ -1,15 +1,27 @@
-@import '~@/assets/style/_var.less';
+@import '~@/conf/style/_var.less';
+
+@img-size: 9rem;
 
 .p {
- color    : @text-color-secondary;
- font-size: @font-size-sm;
+  color: @text-color-secondary;
+  font-size: @font-size-sm;
 }
 
 .icon {
- font-size: 2rem;
- color    : @primary-color;
+  color: @primary-color;
+  font-size: 2rem;
 }
 
 .dragger {
- min-width: 12rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: @img-size;
+  min-height: @img-size;
+  overflow: hidden;
+}
+
+.img-size {
+  width: @img-size;
+  height: @img-size;
 }

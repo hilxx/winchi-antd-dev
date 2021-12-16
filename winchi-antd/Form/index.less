@@ -1,4 +1,5 @@
-@import '../App.less';
+@import '../index.less';
+@import '~antd/lib/style/themes/default.less';
 
 .form {
   .scroll-bar();
@@ -36,4 +37,20 @@
 
 .divider {
   margin: @margin-xs;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  place-content: center;
+}
+
+.current-step {
+  color: @primary-color;
+  font-size: 1.3em;
+}
+
+.header-title {
+  font-size: 1.2em;
+  text-align: center;
 }

@@ -1,81 +1,58 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { TreeSelectProps } from 'antd/lib/tree-select';
 import { Spin, TreeSelect } from 'antd';
-import { stringToIds } from '@/utils/async';
+import type { FormComponentProps } from '../../d';
 import styles from './index.less';
 
-const { TreeNode } = TreeSelect;
+export type TreeData = Exclude<TreeSelectProps<any>['treeData'], void>;
 
-export interface MyTreeSelectDataItem {
-  id: string | number;
-  title: string;
-  children?: MyTreeSelectDataItem[];
+export interface wCTreeSelectProps
+  extends Omit<TreeSelectProps<any>, 'treeData' | 'onChange'>,
+    FormComponentProps {
+  treeData: TreeData | AF<any[], Promise<TreeData>> | void;
 }
 
-export interface MyTreeSelectProps extends TreeSelectProps<any> {
-  request?: () => Promise<MyTreeSelectDataItem[]>;
-  data?: MyTreeSelectDataItem[];
-}
+type Model = React.FC<wCTreeSelectProps>;
 
-type Model = React.FC<MyTreeSelectProps>;
-
-const MyTreeSelect: Model = (props) => {
-  const { data, request, value: value__, multiple, onChange, ...restProps } = props;
-  const [value, setValue] = useState<string[]>([]);
-  const [renderData, setRenderData] = useState<MyTreeSelectDataItem[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    data && setRenderData(data);
-  }, [data]);
+const WcTreeSelect_: Model = ({
+  value: value_,
+  onChange,
+  treeData: treeData_,
+  className = '',
+  ...props
+}) => {
+  const [value, setValue] = useState();
+  const [treeData, setTreeData] = useState<TreeData>();
 
   useEffect(() => {
-    value__ && setValue(typeof value__ === 'string' ? stringToIds(value__) : value__);
-  }, [value__]);
+    const f = typeof value_ === 'function' ? value_ : () => Promise.resolve(value_);
+    f().then((v) => v && setValue(v));
+  }, [value_]);
 
   useEffect(() => {
-    request && setLoading(true);
-    request?.()
-      .then(setRenderData)
-      .then(() => setLoading(false))
-      .catch(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [request]);
-
-  // handle
-  const changeHandle: TreeSelectProps<any>['onChange'] = (selectKeys: string[], ...rest) => {
-    const keys = multiple !== false ? selectKeys : selectKeys.slice(selectKeys.length - 1);
-    setValue(keys);
-    onChange && onChange(keys, ...rest);
-  };
-
-  const renderContent = useMemo(() => {
-    return renderData.map((item) => renderTreeNode(item));
-  }, [renderData]);
+    const promise = typeof treeData_ === 'function' ? treeData_ : () => Promise.resolve(treeData_);
+    promise().then(setTreeData as AF);
+  }, [treeData_]);
 
   return (
-    <TreeSelect
-      autoFocus
-      treeCheckable
-      allowClear
-      treeDefaultExpandAll
-      showCheckedStrategy={TreeSelect.SHOW_CHILD}
-      {...restProps}
-      style={{ height: '100%', ...(props.style || {}) }}
-      multiple={multiple}
-      value={value}
-      onChange={changeHandle}
-      className={`${styles.wrap} ${props.className || ''}`}
-    >
-      {loading ? <Spin /> : renderContent}
-    </TreeSelect>
+    <Spin spinning={!treeData}>
+      {treeData && (
+        <TreeSelect
+          autoFocus
+          treeDefaultExpandedKeys={treeData.map((d) => d.key) as any[]}
+          treeCheckable
+          allowClear
+          showCheckedStrategy={TreeSelect.SHOW_CHILD}
+          value={value}
+          onChange={onChange}
+          className={`${styles.wrap} ${className}`}
+          treeData={treeData}
+          {...props}
+        ></TreeSelect>
+      )}
+    </Spin>
   );
 };
 
-export default React.memo<Model>(MyTreeSelect);
-
-const renderTreeNode = (data: MyTreeSelectDataItem) => (
-  <TreeNode key={data.id} value={data.id} title={data.title}>
-    {data.children ? data.children.map((item) => renderTreeNode(item)) : null}
-  </TreeNode>
-);
+export const WcTreeSelect = React.memo<Model>(WcTreeSelect_);
+export default WcTreeSelect;

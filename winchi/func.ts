@@ -34,7 +34,7 @@ export const curryLazy = R.compose(
   R.curry,
   (fn) =>
     new Proxy(fn, {
-      apply(target, thisArg, args) {
+      apply(target, _, args) {
         return (...rest) => target(...args, ...rest);
       },
     }),
@@ -122,7 +122,6 @@ export const debouncePromise = (rejectValue?) => {
   return (promise: Promise<any>) => {
     const lastReject = queue[queue.length - 1];
     lastReject?.(rejectValue);
-
     return Promise.race([
       promise.then((d) => {
         queue.splice(0, queue.length);

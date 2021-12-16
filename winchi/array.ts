@@ -58,9 +58,7 @@ export const sortByProp: AF = R.curry((prop_: Key, arr: any[]) => {
   return newArr.sort((a, b) => prop(a) - prop(b));
 });
 
-/**
- * @description 更新数组某一项的值
- */
+/** @description 更新数组某一项的值 */
 export const setArr: AF = R.curry((arr: any[], index: number, newV): any[] =>
   newV === arr[index] ? arr : [...arr.slice(0, index), newV, ...arr.slice(index + 1)],
 );
@@ -71,3 +69,14 @@ export const arrMove = R.curry((origin: number, target: number, arr: any[]) => [
   arr[origin],
   ...arr.slice(target + 1),
 ]);
+
+export const arrPropEqual = R.curry((a1: any[], a2: any[]) => {
+  if (a1.length !== a2.length) return false;
+
+  for (let i = 0, len = a1.length; i < len; i++)
+    if (a1[i] !== a2[i]) {
+      return false;
+    }
+
+  return true;
+});

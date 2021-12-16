@@ -1,6 +1,7 @@
-import React from 'react';
 import Wc, { R } from 'winchi';
 import type { Columns } from './d';
+
+export const defaultRender = (C: React.ComponentType<any>, props: AO) => <C {...props} />;
 
 const _fn_symbol = Symbol('This is insert Function');
 
@@ -24,14 +25,12 @@ export const processEnum: AF = (handle: AF<[AO, number]>) => async (c: Columns, 
 export const sortColumns = (arr: any[]) => Wc.sortByProp((v) => propXIndex(v) || 0, arr);
 
 /** @description 动态隐藏column */
-export const naughtyHideForm: AF = R.curry((columns: Columns[], data: AO) => {
+export const dynamicForm: AF = R.curryN(2, (columns: Columns[] = Wc.arr, data: AO) => {
   let count = 0;
   const res = columns?.map((c) => {
-    const isFunc = typeof c.hideForm === 'function';
+    const isFunc = typeof c.dynamicColumn === 'function';
     count += isFunc ? 1 : 0;
-    return isFunc ? { ...c, hideForm: (c.hideForm as AF)(data) } : c;
+    return isFunc ? { ...c, ...c.dynamicColumn!(data) } : c;
   });
   return count ? res : columns;
 });
-
-export const defaultRender = (C: React.ComponentType<any>, props: AO) => <C {...props} />;

@@ -24,7 +24,7 @@ export const objToArr = (obj: Record<number, any>) =>
   Object.keys(obj)
     .filter((key) => Number.isInteger(+key))
     .reduce((result, cur) => {
-      Number.isInteger(+cur) && (result[+cur] = obj[cur]);
+      result[cur] = obj[cur]
       return result;
     }, [] as any[]);
 

@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import type { TreeProps } from 'antd/lib/tree';
-import { Tree } from 'antd';
+import { Tree, Spin } from 'antd';
 import styles from './index.less';
 
-export interface MyTreeProps extends TreeProps {
+export interface WcTreeProps extends Omit<TreeProps, 'treeData'> {
   request?: AF<any[], Promise<any>>;
   onChange?: AF;
   value?: any;
+  treeData?: TreeProps['treeData'] | AF<any[], Promise<TreeProps['treeData']>>
 }
 
-type Model = React.FC<MyTreeProps>;
+type Model = React.FC<WcTreeProps>;
 
-const MyTree: Model = (props) => {
+const WcTree_: Model = (props) => {
   const {
     request,
     value,
@@ -22,15 +23,12 @@ const MyTree: Model = (props) => {
     className = '',
     ...restProps
   } = props;
-  const [treeData, setTreeData] = useState(treeData_);
+  const [treeData, setTreeData] = useState();
 
   useEffect(() => {
-    treeData_ && setTreeData(treeData_);
+    const promise = () => Promise.resolve(typeof treeData_ === 'function' ? treeData_() : treeData_)
+    promise().then(setTreeData as AF)
   }, [treeData_]);
-
-  useEffect(() => {
-    request?.().then(setTreeData);
-  }, [request]);
 
   const checkHandle: TreeProps['onCheck'] = (keys, ...rest) => {
     onChange?.(keys, ...rest);
@@ -38,17 +36,25 @@ const MyTree: Model = (props) => {
   };
 
   return (
-    <Tree
-      className={`${styles.wrap} ${className}`}
-      autoExpandParent
-      defaultExpandAll
-      {...restProps}
-      checkable={checkable}
-      onCheck={checkHandle}
-      treeData={treeData}
-      checkedKeys={value}
-    />
-  );
+    <Spin spinning={!treeData}>
+      {
+        treeData && (
+          <Tree
+            className={`${styles.wrap} ${className}`}
+            autoExpandParent
+            defaultExpandAll
+            {...restProps}
+            checkable={checkable}
+            onCheck={checkHandle}
+            treeData={treeData}
+            checkedKeys={value}
+          />
+        )
+      }
+    </Spin>
+  )
+
 };
 
-export default React.memo<Model>(MyTree);
+export const WcTree = React.memo<Model>(WcTree_)
+export default WcTree;

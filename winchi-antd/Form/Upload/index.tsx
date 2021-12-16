@@ -1,91 +1,126 @@
-import React, {  useRef, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import type { DraggerProps } from 'antd/lib/upload/Dragger';
 import type { UploadFile } from 'antd/lib/upload/interface';
-import { Upload } from 'antd';
+import { Upload, Image } from 'antd';
 import { InboxOutlined } from '@ant-design/icons';
-import { idsToString } from '@/utils/async';
-import PopImg from '@/components/Pop/PopImg';
-import PopVideo from '@/components/Pop/PopVideo';
+import Wc from 'winchi'
+import { WcFormContext } from '..'
+import { FormComponentProps } from '../../d'
 import styles from './index.less';
 
 const { Dragger } = Upload;
 
-export type MyUploadProps = Omit<DraggerProps, 'onChange'> & {
-  onChange?: (ids: string) => any;
-};
+export type WcFileType = 'image' | 'video' | 'audio' | 'text'
 
-const _recordUploading = new Set();
+export interface WcUploadProps extends Omit<DraggerProps, 'onChange'>, FormComponentProps {
+  fileType?: WcFileType[]
+}
 
-const MyUpload: React.FC<MyUploadProps> = (props) => {
-  const { onChange, ...restProps } = props;
-  // const { setIsLoading } = useModel('addForm');
-  const [previewFile, setPreviewFile] = useState<UploadFile>();
-  /* 上传没有结束，关掉了组件 */
-  const fileListUidRef = useRef<Set<string>>(new Set());
+const MyUpload_: React.FC<WcUploadProps> = ({
+  className = '',
+  onChange,
+  value,
+  fileType = Wc.arr,
+  accept: accept_ = '',
+  beforeUpload: beforeUpload_ = () => true,
+  ...props
+}) => {
+  const { toggleLoading } = useContext(WcFormContext)
+  const [fileList, setFileList] = useState<UploadFile[]>(Wc.arr)
+  const [imgUrl, setImgUrl] = useState<string>()
+  const isSelfChangeRef = useRef<boolean>(false)
+  const accept = `${accept_} ${fileType.reduce((r, key) => `${r}${_mapAccept[key] ? `,${_mapAccept[key]}` : ''}`, '')}`
 
-  /* loading关闭 */
-  // useEffect(() => {
-  //   return () => {
-  //     // eslint-disable-next-line react-hooks/exhaustive-deps
-  //     fileListUidRef.current.forEach((uid) => _recordUploading.delete(uid));
-  //     _recordUploading.size || setIsLoading(false);
-  //   };
-  // }, [setIsLoading]);
+  useEffect(() => {
+    isSelfChangeRef.current || setFileList(Array.isArray(value) ? value : Wc.arr)
+    isSelfChangeRef.current = false
+  }, [value])
+
+  useEffect(() => {
+    const loadingFile = fileList?.find(d => d.status === 'uploading')
+    toggleLoading?.(!!loadingFile)
+  }, [fileList])
 
   // handle
-  const changeHandle: DraggerProps['onChange'] = (info) => {
-    const { status, uid } = info.file;
-    if (status === 'uploading') {
-      _recordUploading.add(uid);
-      fileListUidRef.current.add(uid);
-      // setIsLoading(true);
-    } else {
-      _recordUploading.delete(uid);
-      fileListUidRef.current.delete(uid);
-      // _recordUploading.size || setIsLoading(false);
-      const links = idsToString(info.fileList.map((item) => item.response?.data?.link));
-      onChange && onChange(links);
+  const changeHandle: DraggerProps['onChange'] = ({ file, fileList }) => {
+    if (!file.status) return
+    if (file.status === 'done') {
+      isSelfChangeRef.current = true
+      onChange?.(
+        fileList
+          .map((item) => item.response)
+          .filter(d => d)
+      )
     }
+
+    setFileList(fileList.filter(d => beforeUpload(d.originFileObj, fileList)))
   };
-  const previewVisibleChange = (visible: boolean) => {
-    visible || setPreviewFile(undefined);
-  };
-  
+
+  const beforeUpload = (file, list) => {
+    const fileTypeCheck = fileType.find(key => _checkFile[key]?.(file) === false)
+    return fileTypeCheck ? false : beforeUpload_?.(file, list)
+  }
+
+  const previewHandle = (file: UploadFile) => {
+    if (_checkFile.image(file)) {
+      setImgUrl(file.url ?? file.thumbUrl)
+    }
+  }
+
   return (
     <>
       <Dragger
         name="file"
-        withCredentials
         listType="picture"
         showUploadList
-        multiple
-        onPreview={(v) => setPreviewFile(v)}
-        //   maxCount={1}
-        // action={FileURL.put}
-        {...restProps}
-        className={`${styles.dragger} ${props.className || ''}`}
+        onPreview={previewHandle}
+        className={`${styles.dragger} ${className}`}
         onChange={changeHandle}
+        accept={accept}
+        beforeUpload={beforeUpload}
+        {...props}
+        fileList={fileList}
       >
         <InboxOutlined className={styles.icon} />
-        <p className={styles.p}>可点击可拖动</p>
       </Dragger>
-      <PopImg
-        src={previewFile?.response?.data?.link || previewFile?.thumbUrl}
-        fallback={previewFile?.thumbUrl}
-        width={0}
+
+      <Image
+        placeholder={null}
         preview={{
-          visible: !!previewFile && _isImg(previewFile),
-          onVisibleChange: previewVisibleChange,
+          visible: !!imgUrl,
+          src: imgUrl,
+          onVisibleChange(boolean) {
+            boolean || setImgUrl(undefined)
+          }
         }}
       />
-      {previewFile?.response?.data?.link && _isVideo(previewFile) ? (
-        <PopVideo src={previewFile.response.data.link} onClose={() => setPreviewFile(undefined)} />
-      ) : null}
     </>
+
   );
 };
 
-export default React.memo<React.FC<MyUploadProps>>(MyUpload);
+export const WcUpload = React.memo<React.FC<WcUploadProps>>(MyUpload_);
 
-const _isVideo = (file: UploadFile) => file.type.includes('video');
-const _isImg = (file: UploadFile) => file.type.includes('image');
+export default WcUpload
+
+const _mapAccept: Record<WcFileType, string> = {
+  image: 'image/*',
+  video: 'video/*',
+  audio: 'image/*',
+  text: 'text/*',
+}
+
+const _checkFile: Record<WcFileType, AF<[UploadFile], boolean>> = {
+  image(file) {
+    return file.type.includes('image')
+  },
+  video(file) {
+    return file.type.includes('video')
+  },
+  audio(file) {
+    return file.type.includes('audio')
+  },
+  text(file) {
+    return file.type.includes('text')
+  },
+}

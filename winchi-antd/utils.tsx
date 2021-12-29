@@ -1,3 +1,4 @@
+import React from 'react';
 import Wc, { R } from 'winchi';
 import type { Columns } from './d';
 

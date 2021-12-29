@@ -122,15 +122,13 @@ const ComposeQuery_: Model = ({ children, queryProps, ...props }) => {
       x: columns.length * 120,
     },
     rowKey,
-    ...props,
     dataSource: data,
+    ...props,
     pagination: one
       ? { pageSize, size: pagination?.size, hideOnSinglePage: pagination?.hideOnSinglePage }
       : pagination,
     loading: spinning,
   };
-
-  childrenProps.rowSelection?.value?.[0] && console.log(childrenProps.rowSelection?.value?.[0]);
 
   return children ? children(childrenProps) : <Table {...(childrenProps as any)} />;
 };

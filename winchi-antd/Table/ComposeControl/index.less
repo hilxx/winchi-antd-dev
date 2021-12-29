@@ -16,6 +16,21 @@
       margin-left: 0;
     }
   }
+
+  > main {
+    display: flex;
+    flex-grow: 1;
+    gap: 0 @margin-sm;
+    align-items: center;
+    justify-content: flex-end;
+    min-height: 2.6rem;
+
+    > * {
+      &:first-child {
+        flex-grow: 1;
+      }
+    }
+  }
 }
 
 .title {

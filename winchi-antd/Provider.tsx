@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { WcConfig } from './d';
 import Wc from 'winchi';
 
@@ -10,10 +10,11 @@ export const defaultVal: {
     size: 'middle',
     modalWidth: 500,
     queryProps: {
+      startCurrent: 1,
       pageSize: 20,
-      propData: 'data',
+      propData: 'records',
       propTotal: 'total',
-      requestPageKey: 'page',
+      requestPageKey: 'current',
       requestPageSizeKey: 'pageSize',
       request: () => Promise.reject('ComposeQuery request(): 没有传递request，但是调用了'),
       composeRequest: (f, p) => f?.(p),

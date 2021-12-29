@@ -15,12 +15,12 @@ type Model = React.FC<ComposTableProps>;
 
 const _controlProps: ComposTableProps['controlProps'] = {
   refresh: true,
-  density: true,
+  density: false,
   setting: false,
 };
 
 const ComposeControl_: Model = ({ children, controlProps, ...props_ }) => {
-  if (!controlProps) return children?.(props_);
+  if (!controlProps || controlProps.disable) return children?.(props_);
 
   const {
     wcConfig: { queryProps: defaultQueryProps = Wc.obj, size = 'middle' },
@@ -41,7 +41,7 @@ const ComposeControl_: Model = ({ children, controlProps, ...props_ }) => {
     Rights,
   } = controlProps ?? _controlProps;
   const [loading, setLoading] = useState(false);
-  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>(Wc.arr);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<any[]>(Wc.arr);
   const selectedRowsRef = useRef<any[]>();
   const actionRef = useRef<TableActionRef>();
 
@@ -112,13 +112,14 @@ const ComposeControl_: Model = ({ children, controlProps, ...props_ }) => {
 
   const tableHeaderJSX = (
     <header className={styles['control-content']}>
-      <Spin spinning={loading} indicator={<></>} className={styles['filter-content']}>
-        {selectedRowsRef.current?.length ? renderContent?.(selectedRowsRef.current) : titleJSX}
-      </Spin>
-
-      {Rights?.map((c, index) => (
-        <span key={index}>{c}</span>
-      ))}
+      <main>
+        <Spin spinning={loading} indicator={<></>}>
+          {selectedRowsRef.current?.length ? renderContent?.(selectedRowsRef.current) : titleJSX}
+        </Spin>
+        {Rights?.map((c, index) => (
+          <span key={index}>{c}</span>
+        ))}
+      </main>
 
       {refresh === false ? null : loading ? (
         <LoadingOutlined />

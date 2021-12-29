@@ -28,7 +28,6 @@ export interface WcPageProps<T extends AO = any>
   className?: string;
   pageRef?: React.RefObject<WcPageRef | void> | (React.RefObject<WcPageRef | void> | void)[];
   composeTable?(props?: AO): React.ReactNode;
-  request?(...p: any[]): Promise<any>;
 }
 
 type Model = React.FC<WcPageProps>;
@@ -45,7 +44,6 @@ const WcPage_: Model = ({
   pageRef = Wc.arr,
   composeTable,
   queryProps = Wc.obj,
-  request,
   ...props
 }) => {
   const { wcConfig, setWcConfig } = useWcConfig();
@@ -126,7 +124,6 @@ const WcPage_: Model = ({
       ...queryProps,
       composeRequest,
       actionRef,
-      request,
     },
   };
 
